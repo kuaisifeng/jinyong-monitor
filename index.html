@@ -170,13 +170,11 @@
     min-height: 34px;
   }
   .check-item:hover { background: var(--bg-card-hover); }
-  .check-item:hover .cb-dark {
-    border-color: var(--cb-border-hover) !important;
-    background: var(--cb-bg-hover) !important;
-  }
 
-  /* 高对比度自定义复选框（服务器 / Bark / 维护时段 共用） */
-  .cb-dark {
+  /* ============ 自定义高对比度复选框 ============ */
+  /* 服务器列表 / Bark 密钥 / 维护时段 共用 */
+  .check-item input[type="checkbox"],
+  .maint-days input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
     width: 18px; height: 18px;
@@ -190,22 +188,27 @@
     transition: all 0.15s ease;
     margin: 0; padding: 0; outline: none;
   }
-  .cb-dark:hover {
+  .check-item:hover input[type="checkbox"],
+  .maint-days label:hover input[type="checkbox"] {
     border-color: var(--cb-border-hover);
     background: var(--cb-bg-hover);
   }
-  .cb-dark:focus {
+  .check-item input[type="checkbox"]:focus,
+  .maint-days input[type="checkbox"]:focus {
     box-shadow: 0 0 0 2px rgba(77,158,255,0.3);
   }
-  .cb-dark:checked {
+  .check-item input[type="checkbox"]:checked,
+  .maint-days input[type="checkbox"]:checked {
     background: var(--cb-checked);
     border-color: var(--cb-checked);
     box-shadow: 0 0 10px var(--cb-checked-glow);
   }
-  .cb-dark:checked:hover {
+  .check-item input[type="checkbox"]:checked:hover,
+  .maint-days label:hover input[type="checkbox"]:checked {
     background: #6cafff; border-color: #6cafff;
   }
-  .cb-dark:checked::after {
+  .check-item input[type="checkbox"]:checked::after,
+  .maint-days input[type="checkbox"]:checked::after {
     content: "";
     position: absolute;
     left: 4px; top: 0px;
@@ -290,7 +293,7 @@
     font-weight: 600;
   }
   .maint-days {
-    display: flex; gap: 10px; flex-wrap: wrap;
+    display: flex; gap: 8px; flex-wrap: wrap;
     margin-bottom: 12px;
   }
   .maint-days label {
@@ -516,11 +519,13 @@
     .table-wrapper { max-height: 40%; }
     .toolbar input { max-width: none; }
 
-    .cb-dark {
+    .check-item input[type="checkbox"],
+    .maint-days input[type="checkbox"] {
       width: 20px; height: 20px;
       min-width: 20px; min-height: 20px;
     }
-    .cb-dark:checked::after {
+    .check-item input[type="checkbox"]:checked::after,
+    .maint-days input[type="checkbox"]:checked::after {
       left: 5px; top: 1px;
       width: 5px; height: 10px;
     }
@@ -665,7 +670,6 @@
   </div>
 </div>
 
-<!-- README 弹窗 -->
 <div class="modal-mask" id="readmeMask">
   <div class="modal" style="max-width:560px;">
     <h3 class="accent">📖 使用说明</h3>
@@ -1042,7 +1046,7 @@ function renderServerList() {
   }
   view.innerHTML = servers.map((s, i) => `
     <label class="check-item">
-      <input type="checkbox" class="cb-dark" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
+      <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
       <span class="s-name">${escapeHtml(s.name)}</span>
       <span class="s-ip">${escapeHtml(s.ip)}:${s.port || DEFAULT_PORT}</span>
     </label>
@@ -1129,7 +1133,7 @@ function renderBarkList() {
       const shortKey = b.key.length > 20 ? b.key.slice(0, 10) + "..." + b.key.slice(-6) : b.key;
       return `
         <label class="check-item">
-          <input type="checkbox" class="cb-dark" data-idx="${i}" ${b.enabled ? "checked" : ""}>
+          <input type="checkbox" data-idx="${i}" ${b.enabled ? "checked" : ""}>
           <span class="s-key" title="${escapeHtml(b.key)}">${escapeHtml(shortKey)}</span>
         </label>
       `;
@@ -1245,7 +1249,7 @@ function renderMaintEditRules() {
     const dayCbs = tpl.allowedDays.map((d) => {
       const checked = (w.days || []).includes(d) ? "checked" : "";
       return `<label>
-        <input type="checkbox" class="cb-dark" data-idx="${i}" data-day="${d}" ${checked}>
+        <input type="checkbox" data-idx="${i}" data-day="${d}" ${checked}>
         <span>${WEEKDAY_SHORT[d]}</span>
       </label>`;
     }).join("");
