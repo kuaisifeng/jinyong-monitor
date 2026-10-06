@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>金庸群侠传至尊服务器监控面板</title>
 <style>
   :root {
@@ -22,7 +22,7 @@
     --radius: 12px;
     --shadow: 0 4px 20px rgba(0,0,0,0.35);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
     height: 100%;
     background: var(--bg);
@@ -32,12 +32,14 @@
     overflow: hidden;
   }
 
+  /* ========= 顶栏 ========= */
   .topbar {
-    display: flex; align-items: center; height: 56px; padding: 0 18px;
+    display: flex; align-items: center; height: 56px; padding: 0 14px;
     background: linear-gradient(180deg, #131826 0%, #0f1422 100%);
-    border-bottom: 1px solid var(--border); gap: 16px; position: relative; z-index: 20;
+    border-bottom: 1px solid var(--border); gap: 12px;
+    position: relative; z-index: 20;
   }
-  .logo { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .logo { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .logo-icon {
     width: 28px; height: 28px;
     background: linear-gradient(135deg, var(--accent), #7c5cff);
@@ -50,24 +52,31 @@
     border: 1px solid rgba(77,158,255,0.15); border-radius: 8px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .topbar-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-  .clock {
-    font-family: "Consolas", "Monaco", monospace; font-size: 13px; color: var(--text-dim);
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); border-radius: 8px; cursor: pointer;
+    font-size: 15px; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; -webkit-appearance: none;
+    touch-action: manipulation;
   }
-  .clock b { color: var(--accent); font-weight: 500; font-size: 11px; margin-left: 4px; }
+  .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .clock {
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px; color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .clock b { color: var(--accent); font-weight: 500; font-size: 10px; margin-left: 4px; }
   .run-indicator {
     display: flex; align-items: center; gap: 6px; padding: 4px 10px;
     border-radius: 999px; background: rgba(136,146,168,0.1);
     border: 1px solid var(--border); font-size: 12px;
+    white-space: nowrap;
   }
-  .run-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--text-mute); transition: background 0.3s;
-  }
-  .run-indicator.running .run-dot {
-    background: var(--online); box-shadow: 0 0 8px var(--online);
-    animation: pulse 2s infinite;
-  }
+  .run-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-mute); }
+  .run-indicator.running .run-dot { background: var(--online); box-shadow: 0 0 8px var(--online); animation: pulse 2s infinite; }
   .run-indicator.running .run-text { color: var(--online); }
   .run-indicator.stopped .run-dot { background: var(--offline); }
   .run-indicator.stopped .run-text { color: var(--offline); }
@@ -75,15 +84,20 @@
 
   .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
+  /* ========= 侧边栏 ========= */
   .sidebar {
-    width: 320px; background: var(--bg-card); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; transition: width 0.25s ease;
+    width: 320px; background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transition: width 0.25s ease;
     flex-shrink: 0; overflow: hidden;
+    position: relative;
   }
   .sidebar.collapsed { width: 44px; }
   .sidebar-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    min-height: 52px;
   }
   .sidebar-header span {
     font-weight: 600; font-size: 13px; color: var(--text-dim);
@@ -91,87 +105,112 @@
   }
   .sidebar.collapsed .sidebar-header span { display: none; }
   .collapse-btn {
-    background: transparent; border: none; color: var(--text-dim);
-    cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 6px;
+    background: transparent; border: 1px solid transparent;
+    color: var(--text-dim); cursor: pointer;
+    font-size: 14px; padding: 6px 10px; border-radius: 6px;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    min-width: 36px; min-height: 36px;
+    display: flex; align-items: center; justify-content: center;
   }
   .collapse-btn:hover { background: var(--bg-card-hover); color: var(--text); }
-  .sidebar-content { padding: 16px; overflow-y: auto; flex: 1; }
+  .collapse-btn:active { background: var(--accent); color: #fff; }
+  .sidebar-content { padding: 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .sidebar.collapsed .sidebar-content { display: none; }
 
   .field { margin-bottom: 14px; }
-  .field label {
+  .field-header {
     display: flex; align-items: center; justify-content: space-between;
-    font-size: 12px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .field label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-dim); font-weight: 500;
   }
   .field label .badge {
     font-size: 10px; padding: 2px 8px; border-radius: 999px;
     background: rgba(77,158,255,0.15); color: var(--accent); font-weight: 600;
   }
-  .field label .badge.run {
-    background: rgba(74,222,128,0.15); color: var(--online);
-  }
+  .field label .badge.run { background: rgba(74,222,128,0.15); color: var(--online); }
   .field input, .field textarea, .field select {
     width: 100%; background: var(--bg-input); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 10px; color: var(--text);
     font-size: 13px; font-family: inherit; outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s; -webkit-appearance: none;
   }
   .field input:focus, .field textarea:focus, .field select:focus {
     border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
   }
   .field textarea {
-    min-height: 110px; resize: vertical;
-    font-family: "Consolas", "Monaco", monospace; font-size: 12px; line-height: 1.5;
+    min-height: 100px; resize: vertical;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px; line-height: 1.5;
   }
-  .field textarea:disabled, .field input:disabled {
-    opacity: 0.5; cursor: not-allowed;
-  }
+  .field input:disabled, .field textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* 服务器复选列表 */
-  .server-check-list {
+  /* 复选列表 */
+  .check-list {
     max-height: 220px; overflow-y: auto;
     border: 1px solid var(--border); border-radius: 8px;
     background: var(--bg-input); padding: 6px;
+    -webkit-overflow-scrolling: touch;
   }
-  .server-check-item {
+  .check-item {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px; border-radius: 6px; cursor: pointer;
-    transition: background 0.15s;
-    font-size: 12px;
+    transition: background 0.15s; font-size: 12px;
+    min-height: 32px;
   }
-  .server-check-item:hover { background: var(--bg-card-hover); }
-  .server-check-item input[type="checkbox"] {
-    width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer;
+  .check-item:hover { background: var(--bg-card-hover); }
+  .check-item input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--accent);
+    cursor: pointer; flex-shrink: 0;
   }
-  .server-check-item .s-name { color: var(--text); font-weight: 500; flex-shrink: 0; }
-  .server-check-item .s-ip {
+  .check-item .s-name {
+    color: var(--text); font-weight: 500; flex-shrink: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .check-item .s-ip {
     color: var(--text-mute);
     font-family: "Consolas", "Monaco", monospace;
     font-size: 11px; margin-left: auto;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .server-check-empty {
-    color: var(--text-mute); text-align: center; padding: 16px;
-    font-size: 12px;
+  .check-item .s-key {
+    color: var(--text-dim);
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 11px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .server-run-actions {
-    display: flex; gap: 6px; margin-top: 6px;
+  .check-empty {
+    color: var(--text-mute); text-align: center;
+    padding: 16px; font-size: 12px;
   }
+  .list-actions { display: flex; gap: 6px; margin-top: 6px; }
   .btn-mini {
-    flex: 1; padding: 5px 8px;
-    border: 1px solid var(--border);
-    background: transparent; color: var(--text-dim);
-    font-size: 11px; border-radius: 6px; cursor: pointer;
-    transition: all 0.2s;
+    flex: 1; padding: 6px 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); font-size: 11px; border-radius: 6px;
+    cursor: pointer; transition: all 0.2s;
     font-family: inherit;
+    -webkit-appearance: none;
+    touch-action: manipulation;
+    min-height: 30px;
   }
   .btn-mini:hover { color: var(--text); border-color: var(--accent); }
   .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
+  .btn-mini.active { background: rgba(77,158,255,0.15); color: var(--accent); border-color: var(--accent); }
 
   .btn {
-    width: 100%; padding: 9px 14px; border: none; border-radius: 8px;
+    width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
     background: var(--bg-card-hover); color: var(--text);
     font-size: 13px; font-weight: 500; cursor: pointer;
-    transition: all 0.2s; margin-bottom: 8px; font-family: inherit;
+    transition: all 0.2s; margin-bottom: 8px;
+    font-family: inherit; -webkit-appearance: none;
+    touch-action: manipulation;
   }
   .btn:hover { background: #202844; }
   .btn:active { transform: scale(0.98); }
@@ -184,21 +223,22 @@
   .btn.danger { background: #d32f2f; color: #fff; }
   .btn.danger:hover:not(:disabled) { background: #f44336; }
 
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
   .content {
     flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; padding: 16px; gap: 12px;
+    overflow: hidden; padding: 14px; gap: 12px;
   }
-  .toolbar { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .toolbar input {
-    flex: 1; max-width: 320px; background: var(--bg-card);
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 12px; color: var(--text); font-size: 13px;
-    outline: none;
+    flex: 1; max-width: 320px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    color: var(--text); font-size: 13px; outline: none;
+    -webkit-appearance: none;
   }
   .toolbar input:focus { border-color: var(--accent); }
-  .stats { font-size: 12px; color: var(--text-dim); }
+  .stats { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
   .stats b { color: var(--online); font-weight: 600; }
   .stats i { color: var(--offline); font-style: normal; font-weight: 600; }
 
@@ -206,39 +246,29 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius); box-shadow: var(--shadow);
     overflow: auto; flex: 0 1 auto; max-height: 46%;
+    -webkit-overflow-scrolling: touch;
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead { position: sticky; top: 0; background: #0f1422; z-index: 2; }
   th {
-    text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
-    color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px;
+    text-align: left; padding: 10px 12px; font-size: 11px;
+    font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.6px;
     border-bottom: 1px solid var(--border); white-space: nowrap;
   }
-  tbody tr {
-    border-bottom: 1px solid rgba(35,42,61,0.5);
-    transition: background 0.15s;
-  }
+  tbody tr { border-bottom: 1px solid rgba(35,42,61,0.5); transition: background 0.15s; }
   tbody tr:hover { background: var(--bg-card-hover); }
   tbody tr:last-child { border-bottom: none; }
-  td {
-    padding: 10px 12px; color: var(--text);
-    white-space: nowrap; vertical-align: middle;
-  }
+  td { padding: 10px 12px; color: var(--text); white-space: nowrap; vertical-align: middle; }
   td.mono { font-family: "Consolas", "Monaco", monospace; font-size: 12px; }
-  .status-dot {
-    display: inline-block; width: 8px; height: 8px;
-    border-radius: 50%; margin-right: 6px; vertical-align: middle;
-  }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .status-dot.online { background: var(--online); box-shadow: 0 0 8px rgba(74,222,128,0.6); }
   .status-dot.offline { background: var(--offline); box-shadow: 0 0 8px rgba(248,113,113,0.6); }
   .status-cell { display: flex; align-items: center; font-weight: 500; }
   .status-cell.online { color: var(--online); }
   .status-cell.offline { color: var(--offline); }
   .err-text { color: var(--offline); font-size: 12px; }
-  .streak-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
-    font-size: 11px; font-weight: 600;
-  }
+  .streak-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .streak-badge.zero { background: rgba(136,146,168,0.12); color: var(--text-dim); }
   .streak-badge.low { background: rgba(255,183,77,0.15); color: var(--warning); }
   .streak-badge.high { background: rgba(248,113,113,0.18); color: var(--offline); }
@@ -251,14 +281,16 @@
     overflow: hidden; min-height: 0;
   }
   .log-tabs {
-    display: flex; align-items: center; padding: 8px 12px;
-    border-bottom: 1px solid var(--border); background: #0f1422; gap: 6px;
+    display: flex; align-items: center; padding: 8px 10px;
+    border-bottom: 1px solid var(--border); background: #0f1422; gap: 4px;
+    flex-wrap: wrap;
   }
   .tab {
-    padding: 6px 14px; border: none; background: transparent;
+    padding: 6px 12px; border: none; background: transparent;
     color: var(--text-dim); font-size: 12px; font-weight: 500;
     cursor: pointer; border-radius: 6px; transition: all 0.2s;
-    font-family: inherit;
+    font-family: inherit; -webkit-appearance: none;
+    touch-action: manipulation;
   }
   .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
   .tab.active { color: var(--accent); background: rgba(77,158,255,0.1); }
@@ -268,17 +300,17 @@
     background: transparent; color: var(--text-dim);
     font-size: 11px; border-radius: 6px; cursor: pointer;
     transition: all 0.2s; font-family: inherit;
+    -webkit-appearance: none; touch-action: manipulation;
   }
   .log-actions button:hover { color: var(--text); border-color: var(--accent); }
-  .log-actions button.active {
-    background: rgba(77,158,255,0.1); color: var(--accent); border-color: var(--accent);
-  }
+  .log-actions button.active { background: rgba(77,158,255,0.1); color: var(--accent); border-color: var(--accent); }
   .log-content {
     flex: 1; overflow-y: auto; padding: 12px 16px;
     font-family: "Consolas", "Monaco", "Courier New", monospace;
     font-size: 12px; line-height: 1.7;
     color: #ffffff;
     white-space: pre-wrap; word-break: break-all;
+    -webkit-overflow-scrolling: touch;
   }
   .log-content::-webkit-scrollbar { width: 8px; height: 8px; }
   .log-content::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 4px; }
@@ -288,15 +320,17 @@
   .kw-red { color: #f87171; font-weight: 600; }
 
   .modal-mask {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
     display: none; align-items: center; justify-content: center;
     z-index: 1000; backdrop-filter: blur(4px);
+    padding: 16px;
   }
   .modal-mask.show { display: flex; }
   .modal {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px;
-    min-width: 300px; max-width: 90vw;
+    border-radius: var(--radius); padding: 22px;
+    min-width: 280px; max-width: 92vw;
+    max-height: 85vh; overflow-y: auto;
     box-shadow: var(--shadow); animation: modalIn 0.2s ease;
   }
   @keyframes modalIn {
@@ -304,15 +338,16 @@
     to { opacity: 1; transform: scale(1); }
   }
   .modal h3 { font-size: 16px; margin-bottom: 12px; color: var(--warning); }
+  .modal h3.accent { color: var(--accent); }
   .modal p {
     color: var(--text-dim); line-height: 1.6;
-    font-size: 13px; margin-bottom: 18px; white-space: pre-wrap;
+    font-size: 13px; margin-bottom: 14px; white-space: pre-wrap;
   }
   .modal input {
     width: 100%; background: var(--bg-input); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 10px; color: var(--text);
     font-size: 13px; font-family: inherit; outline: none;
-    margin-bottom: 10px;
+    margin-bottom: 10px; -webkit-appearance: none;
   }
   .modal input:focus { border-color: var(--accent); }
   .modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
@@ -320,8 +355,32 @@
     padding: 8px 18px; border: none; border-radius: 8px;
     background: var(--accent); color: #fff; font-size: 13px;
     cursor: pointer; font-family: inherit;
+    -webkit-appearance: none; touch-action: manipulation;
   }
   .modal button.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .modal .readme-section {
+    margin-bottom: 16px;
+  }
+  .modal .readme-section h4 {
+    color: var(--accent); font-size: 13px; margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .modal .readme-section ul {
+    list-style: none; padding-left: 0;
+  }
+  .modal .readme-section li {
+    color: var(--text-dim); font-size: 12px;
+    line-height: 1.7; padding-left: 16px; position: relative;
+  }
+  .modal .readme-section li::before {
+    content: "▸"; color: var(--accent);
+    position: absolute; left: 0;
+  }
+  .modal .readme-section code {
+    background: rgba(77,158,255,0.12);
+    color: var(--accent); padding: 1px 6px; border-radius: 4px;
+    font-family: "Consolas", "Monaco", monospace; font-size: 11px;
+  }
 
   .loading {
     position: fixed; top: 12px; right: 12px;
@@ -336,36 +395,59 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ========= iOS 移动端适配 ========= */
   @media (max-width: 900px) {
-    .topbar { padding: 0 10px; gap: 8px; }
+    .topbar { padding: 0 8px; gap: 6px; height: 52px; }
     .topbar-notice { display: none; }
-    .logo { font-size: 13px; }
+    .logo { font-size: 12px; }
     .logo span:last-child { display: none; }
+    .main { height: calc(100vh - 52px); }
+
+    /* iOS 关键修复：折叠后仍保留 44px 宽度，保证按钮永远可点击 */
     .sidebar {
-      position: absolute; top: 56px; left: 0;
-      height: calc(100vh - 56px); z-index: 50;
+      position: absolute; top: 52px; left: 0;
+      height: calc(100vh - 52px); z-index: 50;
       box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+      max-width: 85vw;
     }
     .sidebar:not(.collapsed) { width: 280px; }
-    .sidebar.collapsed { width: 0; border-right: none; }
-    .content { padding: 10px; }
+    .sidebar.collapsed {
+      width: 44px !important;    /* 关键：不是 0 */
+      border-right: 1px solid var(--border);
+      overflow: visible;
+    }
+    .sidebar.collapsed .sidebar-header {
+      padding: 14px 4px;
+      justify-content: center;
+    }
+    .sidebar.collapsed .sidebar-header span { display: none; }
+    .sidebar.collapsed .collapse-btn {
+      background: rgba(77,158,255,0.1);
+      color: var(--accent);
+      border-color: rgba(77,158,255,0.3);
+    }
+
+    .content { padding: 8px; }
     .clock { display: none; }
     .table-wrapper { max-height: 40%; }
+    .toolbar input { max-width: none; }
   }
 </style>
 </head>
 <body>
 
+<!-- 顶栏 -->
 <div class="topbar">
   <div class="logo">
     <div class="logo-icon">⚔</div>
-    <span>金庸群侠传至尊服务器监控面板</span>
+    <span>金庸群侠传至尊监控</span>
   </div>
   <div class="topbar-notice">
-    ⚡ 浏览器网页关闭就停止刷新 · TCP 探针发包 / Bark 推送 / 持续后台监控由后端 Python 脚本完成 · 网页只做展示与配置
+    ⚡ 后端统一管理状态 · 多设备实时同步 · 网页只做展示
   </div>
   <div class="topbar-right">
-    <div class="clock" id="clock">--:--:--<b>UTC+8</b></div>
+    <button class="icon-btn" id="readmeBtn" title="使用说明">?</button>
+    <div class="clock" id="clock">--:--:--</div>
     <div class="run-indicator stopped" id="runIndicator">
       <span class="run-dot"></span>
       <span class="run-text" id="runText">未运行</span>
@@ -374,35 +456,47 @@
 </div>
 
 <div class="main">
+  <!-- 侧边栏 -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>配置</span>
-      <button class="collapse-btn" id="collapseBtn">◀</button>
+      <button class="collapse-btn" id="collapseBtn" aria-label="折叠侧边栏">◀</button>
     </div>
     <div class="sidebar-content">
 
       <div class="field">
-        <label>后端地址（Render URL）</label>
+        <label>后端地址</label>
         <input type="text" id="backendUrl" placeholder="https://xxx.onrender.com">
         <button class="btn" id="saveBackendBtn" style="margin-top:6px;">保存后端地址</button>
       </div>
 
       <div class="divider"></div>
 
+      <!-- 服务器列表 -->
       <div class="field">
-        <label>服务器列表 <span class="badge" id="serverListMode">编辑模式</span></label>
-        <!-- 编辑态 -->
+        <div class="field-header">
+          <label>服务器列表 <span class="badge" id="serverListMode">编辑模式</span></label>
+        </div>
         <div id="serverEditView">
           <textarea id="serversText" placeholder="18区 49.234.85.110&#10;17区 49.235.42.168"></textarea>
         </div>
-        <!-- 运行态 -->
         <div id="serverRunView" style="display:none;">
-          <div class="server-check-list" id="serverCheckList"></div>
-          <div class="server-run-actions">
+          <div class="check-list" id="serverCheckList"></div>
+          <div class="list-actions">
             <button class="btn-mini" id="addServerBtn">＋ 新增</button>
             <button class="btn-mini danger" id="clearServersBtn">🗑 清空</button>
           </div>
         </div>
+      </div>
+
+      <!-- Bark 密钥列表 -->
+      <div class="field">
+        <div class="field-header">
+          <label>Bark 密钥 <span class="badge" id="barkModeBadge">视图模式</span></label>
+          <button class="btn-mini" id="barkEditToggle" style="max-width:80px;flex:none;">编辑</button>
+        </div>
+        <div id="barkViewList" class="check-list" style="max-height:140px;"></div>
+        <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
       <div class="field">
@@ -431,11 +525,6 @@
         </select>
       </div>
 
-      <div class="field">
-        <label>Bark 密钥</label>
-        <input type="text" id="barkKeyInput" placeholder="粘贴你的 Bark device_key">
-      </div>
-
       <button class="btn primary" id="saveConfigBtn">💾 保存配置到后端</button>
       <button class="btn success" id="startBtn">▶ 启动监控</button>
       <button class="btn danger" id="stopBtn" disabled>■ 停止监控</button>
@@ -448,6 +537,7 @@
     </div>
   </aside>
 
+  <!-- 内容区 -->
   <section class="content">
     <div class="toolbar">
       <input type="text" id="filterInput" placeholder="🔍 筛选服务器名称或 IP...">
@@ -498,8 +588,8 @@
 <!-- 新增服务器弹窗 -->
 <div class="modal-mask" id="addServerMask">
   <div class="modal">
-    <h3 style="color:var(--accent)">新增服务器</h3>
-    <p style="margin-bottom:10px;">输入名称和 IP，点击确认后会自动加入监控列表并默认勾选。</p>
+    <h3 class="accent">新增服务器</h3>
+    <p style="margin-bottom:10px;">输入名称和 IP，确认后会自动加入监控列表并默认勾选。</p>
     <input type="text" id="newServerName" placeholder="名称，例如：18区">
     <input type="text" id="newServerIp" placeholder="IP，例如：49.234.85.110">
     <div class="actions">
@@ -509,11 +599,69 @@
   </div>
 </div>
 
+<!-- README 弹窗 -->
+<div class="modal-mask" id="readmeMask">
+  <div class="modal" style="max-width:520px;">
+    <h3 class="accent">📖 使用说明</h3>
+
+    <div class="readme-section">
+      <h4>⚙️ 快速开始</h4>
+      <ul>
+        <li>在左侧「后端地址」里填入你的 Render 地址</li>
+        <li>点击「保存后端地址」，等待配置自动加载</li>
+        <li>编辑「服务器列表」，每行格式：<code>名称 IP</code></li>
+        <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
+        <li>点击「保存配置到后端」→「▶ 启动监控」</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔄 多设备同步</h4>
+      <ul>
+        <li>所有状态（服务器列表、勾选、侧边栏折叠、Bark 密钥）都保存在后端</li>
+        <li>任意设备操作后，其他设备 2 秒内自动同步</li>
+        <li>只有「后端地址」是本设备本地保存的</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🛰 探针原理</h4>
+      <ul>
+        <li>不是简单 TCP ping，而是发送 XOR 0x9F 加密的登录封包</li>
+        <li>服务器正确解密并返回 payload[0]=0x01 才算「在线」</li>
+        <li>比端口扫描准确，能识别服务是否真正可用</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔔 Bark 报警</h4>
+      <ul>
+        <li>连续超时达到阈值（默认 5 次）自动推送到所有勾选的密钥</li>
+        <li>报警内容含服务器名、IP、首次超时时间</li>
+        <li>critical 级别 + alarm 铃声 + 满音量，绕过静音模式</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>⚠️ 注意事项</h4>
+      <ul>
+        <li>浏览器网页关闭不影响后端监控（后端在 Render 上持续运行）</li>
+        <li>Render 免费版 15 分钟无流量会休眠，已配置 UptimeRobot 保活</li>
+        <li>账号密码已在日志中明文暴露，建议修改</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button id="readmeClose">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="loading" id="loading"></div>
 
 <script>
 /* ================================================================
- *  金庸群侠传至尊服务器监控面板 · 前端逻辑
+ *  前端逻辑 · 所有运行时状态从后端拉取，本地不保存
  * ================================================================ */
 const state = {
   backendUrl: localStorage.getItem("backendUrl") || "",
@@ -529,11 +677,14 @@ const state = {
   lastOkMap: {},
   configLoaded: false,
   timezoneOffset: 8,
+  sidebarCollapsed: false,
+  barkKeys: [],
 };
 
+// 前端轮询间隔：2 秒（状态）+ 3 秒（日志）
+const POLL_STATUS = 2000;
+const POLL_LOGS = 3000;
 const MAX_RTT_HISTORY = 30;
-const POLL_INTERVAL = 5000;
-const POLL_LOGS = 8000;
 
 const $ = (id) => document.getElementById(id);
 const clockEl = $("clock");
@@ -544,9 +695,11 @@ const logContent = $("logContent");
 const statsText = $("statsText");
 const filterInput = $("filterInput");
 const loading = $("loading");
+const sidebarEl = $("sidebar");
+
+let barkEditMode = false;
 
 function showLoading(show) { loading.classList.toggle("show", show); }
-
 function pad(n) { return String(n).padStart(2, "0"); }
 
 function nowStr(offsetHours) {
@@ -560,16 +713,50 @@ function apiUrl(path) {
   return state.backendUrl.trim().replace(/\/+$/, "") + path;
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// ---------- 时钟 ----------
 setInterval(() => {
-  clockEl.innerHTML = nowStr(state.timezoneOffset) + `<b>UTC${state.timezoneOffset>=0?'+':''}${state.timezoneOffset}</b>`;
+  clockEl.innerHTML = nowStr(state.timezoneOffset) + `<b>UTC${state.timezoneOffset >= 0 ? "+" : ""}${state.timezoneOffset}</b>`;
 }, 1000);
 
-$("collapseBtn").addEventListener("click", () => {
-  const sb = $("sidebar");
-  sb.classList.toggle("collapsed");
-  $("collapseBtn").textContent = sb.classList.contains("collapsed") ? "▶" : "◀";
+// ---------- 侧边栏折叠（多设备同步） ----------
+function setSidebarCollapsed(collapsed, syncToBackend) {
+  state.sidebarCollapsed = collapsed;
+  if (collapsed) {
+    sidebarEl.classList.add("collapsed");
+    $("collapseBtn").textContent = "▶";
+  } else {
+    sidebarEl.classList.remove("collapsed");
+    $("collapseBtn").textContent = "◀";
+  }
+  if (syncToBackend && state.backendUrl) {
+    fetch(apiUrl("/api/sidebar/toggle"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ collapsed }),
+    }).catch(() => {});
+  }
+}
+
+$("collapseBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const next = !sidebarEl.classList.contains("collapsed");
+  setSidebarCollapsed(next, true);
+});
+// iOS 兼容：同时监听 touchend，避免 click 事件丢失
+$("collapseBtn").addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const next = !sidebarEl.classList.contains("collapsed");
+  setSidebarCollapsed(next, true);
 });
 
+// ---------- 通用弹窗 ----------
 function showModal(title, body, onClose) {
   $("modalTitle").textContent = title;
   $("modalBody").textContent = body;
@@ -582,7 +769,13 @@ function showModal(title, body, onClose) {
   };
   btn.addEventListener("click", handler);
 }
+$("modalClose").addEventListener("click", () => $("modalMask").classList.remove("show"));
 
+// ---------- README ----------
+$("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
+$("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
+
+// ---------- 后端地址保存 ----------
 $("saveBackendBtn").addEventListener("click", () => {
   let url = $("backendUrl").value.trim();
   if (!url) { showModal("提示", "后端地址不能为空"); return; }
@@ -597,6 +790,7 @@ $("saveBackendBtn").addEventListener("click", () => {
   showModal("已保存", "后端地址已保存：\n" + state.backendUrl);
 });
 
+// ---------- 解析服务器文本 ----------
 function parseServersText(text) {
   const servers = [];
   text.split(/\r?\n/).forEach((line) => {
@@ -612,6 +806,7 @@ function parseServersText(text) {
   return servers;
 }
 
+// ---------- 加载配置 ----------
 async function loadConfig() {
   if (!state.backendUrl || state.configLoaded) return;
   try {
@@ -622,9 +817,15 @@ async function loadConfig() {
     $("portInput").value = cfg.port || 6732;
     $("intervalInput").value = cfg.interval || 20;
     $("alertStreakInput").value = cfg.alert_streak || 5;
-    $("barkKeyInput").value = cfg.bark_key || "";
     $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
+
+    // Bark 密钥
+    state.barkKeys = (cfg.bark_keys || []).map((b) => ({
+      key: b.key, enabled: b.enabled !== false
+    }));
+    renderBarkList();
+
     state.configLoaded = true;
     renderServerList();
   } catch (e) {
@@ -632,29 +833,25 @@ async function loadConfig() {
   }
 }
 
-function collectConfig() {
-  return {
+// ---------- 保存配置 ----------
+$("saveConfigBtn").addEventListener("click", async () => {
+  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
+
+  const baseCfg = {
     port: parseInt($("portInput").value) || 6732,
     interval: parseFloat($("intervalInput").value) || 20,
     alert_streak: parseInt($("alertStreakInput").value) || 5,
-    bark_key: $("barkKeyInput").value.trim(),
     timezone_offset: parseInt($("timezoneSelect").value) || 0,
-    servers: parseServersText($("serversText").value),
   };
-}
 
-$("saveConfigBtn").addEventListener("click", async () => {
-  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
   if (state.running) {
-    // 运行态：只更新非服务器字段，服务器列表由复选框管理
-    const cfg = collectConfig();
-    delete cfg.servers;
+    // 运行态：服务器列表和 Bark 列表由复选 / 编辑控件单独管理，这里不动
     showLoading(true);
     try {
       const r = await fetch(apiUrl("/api/config"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cfg),
+        body: JSON.stringify(baseCfg),
       });
       const data = await r.json();
       if (data.ok) {
@@ -670,8 +867,10 @@ $("saveConfigBtn").addEventListener("click", async () => {
     return;
   }
 
-  // 编辑态：完整保存
-  const cfg = collectConfig();
+  // 编辑态：保存服务器列表 + Bark 列表
+  const servers = parseServersText($("serversText").value);
+  const cfg = { ...baseCfg, servers, bark_keys: state.barkKeys };
+
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/config"), {
@@ -684,7 +883,7 @@ $("saveConfigBtn").addEventListener("click", async () => {
       state.config = data.config;
       state.configLoaded = true;
       state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
-      showModal("保存成功", `已保存 ${cfg.servers.length} 台服务器配置。`);
+      showModal("保存成功", `已保存 ${servers.length} 台服务器、${state.barkKeys.length} 个 Bark 密钥。`);
     } else {
       showModal("保存失败", data.msg || "未知错误");
     }
@@ -693,25 +892,20 @@ $("saveConfigBtn").addEventListener("click", async () => {
   } finally { showLoading(false); }
 });
 
-async function startMonitor() {
+// ---------- 启动 / 停止 ----------
+$("startBtn").addEventListener("click", async () => {
   if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/start"), { method: "POST" });
     const data = await r.json();
-    if (!data.ok) {
-      showModal("启动失败", data.msg || "未知错误");
-    } else {
-      state.running = true;
-      await loadConfig();
-      updateRunningState(true);
-    }
-  } catch (e) {
-    showModal("启动失败", String(e));
-  } finally { showLoading(false); }
-}
+    if (!data.ok) showModal("启动失败", data.msg || "未知错误");
+    else { state.running = true; updateRunningState(true); }
+  } catch (e) { showModal("启动失败", String(e)); }
+  finally { showLoading(false); }
+});
 
-async function stopMonitor() {
+$("stopBtn").addEventListener("click", async () => {
   if (!state.backendUrl) return;
   showLoading(true);
   try {
@@ -720,12 +914,9 @@ async function stopMonitor() {
     updateRunningState(false);
   } catch (e) { console.warn(e); }
   finally { showLoading(false); }
-}
+});
 
-$("startBtn").addEventListener("click", startMonitor);
-$("stopBtn").addEventListener("click", stopMonitor);
-
-/* ============ 运行态切换 ============ */
+// ---------- 状态切换 ----------
 function updateRunningState(running) {
   state.running = running;
   const startBtn = $("startBtn");
@@ -755,18 +946,18 @@ function updateRunningState(running) {
   }
 }
 
-/* ============ 服务器复选列表 ============ */
+// ---------- 服务器复选列表 ----------
 function renderServerList() {
-  if (!state.running || !state.config) return;
-  const servers = state.config.servers || [];
+  if (!state.running) return;
+  const servers = (state.config && state.config.servers) || [];
   const list = $("serverCheckList");
   if (!servers.length) {
-    list.innerHTML = '<div class="server-check-empty">列表为空，点击下方“新增”添加</div>';
+    list.innerHTML = '<div class="check-empty">列表为空，点击下方“新增”添加</div>';
     return;
   }
   list.innerHTML = servers.map((s, i) => `
-    <label class="server-check-item">
-      <input type="checkbox" data-index="${i}" ${s.enabled !== false ? "checked" : ""}>
+    <label class="check-item">
+      <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
       <span class="s-name">${escapeHtml(s.name)}</span>
       <span class="s-ip">${escapeHtml(s.ip)}</span>
     </label>
@@ -774,7 +965,7 @@ function renderServerList() {
 
   list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     cb.addEventListener("change", async () => {
-      const idx = parseInt(cb.dataset.index);
+      const idx = parseInt(cb.dataset.idx);
       const srv = state.config.servers[idx];
       const enabled = cb.checked;
       srv.enabled = enabled;
@@ -789,15 +980,13 @@ function renderServerList() {
   });
 }
 
-/* ============ 新增服务器 ============ */
+// ---------- 新增 / 清空服务器 ----------
 $("addServerBtn").addEventListener("click", () => {
   $("newServerName").value = "";
   $("newServerIp").value = "";
   $("addServerMask").classList.add("show");
 });
-$("addServerCancel").addEventListener("click", () => {
-  $("addServerMask").classList.remove("show");
-});
+$("addServerCancel").addEventListener("click", () => $("addServerMask").classList.remove("show"));
 $("addServerConfirm").addEventListener("click", async () => {
   const name = $("newServerName").value.trim();
   const ip = $("newServerIp").value.trim();
@@ -814,14 +1003,11 @@ $("addServerConfirm").addEventListener("click", async () => {
       state.config = data.config;
       renderServerList();
       $("addServerMask").classList.remove("show");
-    } else {
-      alert(data.msg || "添加失败");
-    }
+    } else alert(data.msg || "添加失败");
   } catch (e) { alert(String(e)); }
   finally { showLoading(false); }
 });
 
-/* ============ 清空服务器 ============ */
 $("clearServersBtn").addEventListener("click", async () => {
   if (!confirm("确认清空所有服务器？")) return;
   showLoading(true);
@@ -835,7 +1021,88 @@ $("clearServersBtn").addEventListener("click", async () => {
   finally { showLoading(false); }
 });
 
-/* ============ 清空日志 ============ */
+// ---------- Bark 密钥列表 ----------
+function renderBarkList() {
+  const list = $("barkViewList");
+  const ta = $("barkEditTextarea");
+  const toggle = $("barkEditToggle");
+  const badge = $("barkModeBadge");
+
+  if (barkEditMode) {
+    list.style.display = "none";
+    ta.style.display = "block";
+    ta.value = state.barkKeys.map((b) => b.key).join("\n");
+    toggle.textContent = "完成";
+    toggle.classList.add("active");
+    badge.textContent = "编辑模式";
+  } else {
+    list.style.display = "block";
+    ta.style.display = "none";
+    toggle.textContent = "编辑";
+    toggle.classList.remove("active");
+    badge.textContent = "视图模式";
+
+    if (!state.barkKeys.length) {
+      list.innerHTML = '<div class="check-empty">暂无密钥，点击“编辑”添加</div>';
+      return;
+    }
+    list.innerHTML = state.barkKeys.map((b, i) => {
+      const shortKey = b.key.length > 20 ? b.key.slice(0, 10) + "..." + b.key.slice(-6) : b.key;
+      return `
+        <label class="check-item">
+          <input type="checkbox" data-idx="${i}" ${b.enabled ? "checked" : ""}>
+          <span class="s-key" title="${escapeHtml(b.key)}">${escapeHtml(shortKey)}</span>
+        </label>
+      `;
+    }).join("");
+
+    list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      cb.addEventListener("change", async () => {
+        const idx = parseInt(cb.dataset.idx);
+        state.barkKeys[idx].enabled = cb.checked;
+        await saveBarkKeysToBackend();
+      });
+    });
+  }
+}
+
+async function saveBarkKeysToBackend() {
+  if (!state.backendUrl) return;
+  try {
+    const r = await fetch(apiUrl("/api/config"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bark_keys: state.barkKeys }),
+    });
+    const data = await r.json();
+    if (data.ok && data.config) {
+      state.barkKeys = (data.config.bark_keys || []).map((b) => ({
+        key: b.key, enabled: b.enabled !== false
+      }));
+    }
+  } catch (e) { console.warn(e); }
+}
+
+$("barkEditToggle").addEventListener("click", async () => {
+  if (barkEditMode) {
+    // 退出编辑：解析 textarea，按密钥内容保留原启用状态
+    const text = $("barkEditTextarea").value;
+    const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const oldMap = {};
+    state.barkKeys.forEach((b) => { oldMap[b.key] = b.enabled; });
+    state.barkKeys = lines.map((k) => ({
+      key: k,
+      enabled: oldMap[k] !== undefined ? oldMap[k] : true,
+    }));
+    await saveBarkKeysToBackend();
+    barkEditMode = false;
+  } else {
+    barkEditMode = true;
+  }
+  renderBarkList();
+});
+
+// ---------- 清空日志 ----------
 async function clearLogs(which) {
   if (!state.backendUrl) return;
   try {
@@ -881,13 +1148,14 @@ filterInput.addEventListener("input", () => {
   renderTable();
 });
 
-/* ============ 拉取状态 ============ */
+// ---------- 拉取状态（核心：多设备同步） ----------
 async function fetchStatus() {
   if (!state.backendUrl) return;
   try {
     const r = await fetch(apiUrl("/api/status"));
     const data = await r.json();
 
+    // 运行状态
     const wasRunning = state.running;
     state.running = !!data.running;
     state.results = data.results || [];
@@ -910,6 +1178,34 @@ async function fetchStatus() {
       runText.textContent = "未运行";
     }
 
+    // 侧边栏折叠状态同步
+    if (typeof data.sidebar_collapsed === "boolean") {
+      const current = sidebarEl.classList.contains("collapsed");
+      if (current !== data.sidebar_collapsed) {
+        setSidebarCollapsed(data.sidebar_collapsed, false);
+      }
+    }
+
+    // Bark 密钥列表同步（非编辑模式时）
+    if (!barkEditMode && Array.isArray(data.bark_keys)) {
+      const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false }));
+      if (JSON.stringify(newKeys) !== JSON.stringify(state.barkKeys)) {
+        state.barkKeys = newKeys;
+        renderBarkList();
+      }
+    }
+
+    // 服务器列表同步（非编辑态时）
+    if (state.running && Array.isArray(data.servers_config)) {
+      if (!state.config) state.config = {};
+      const newServers = data.servers_config;
+      if (JSON.stringify(newServers) !== JSON.stringify(state.config.servers)) {
+        state.config.servers = newServers;
+        renderServerList();
+      }
+    }
+
+    // RTT 历史
     state.results.forEach((res) => {
       if (res.ok && typeof res.rtt_ms === "number") {
         const arr = state.rttHistory[res.name] || [];
@@ -919,6 +1215,7 @@ async function fetchStatus() {
       }
     });
 
+    // 状态变化弹窗
     state.results.forEach((res) => {
       const prevOk = state.lastOkMap[res.name];
       if (prevOk === true && res.ok === false && res.streak === 1) {
@@ -943,7 +1240,7 @@ async function fetchLogs() {
   } catch (e) { console.warn("拉取日志失败：", e); }
 }
 
-/* ============ 渲染表格 ============ */
+// ---------- 渲染表格 ----------
 function renderTable() {
   let list = state.results;
   if (state.filter) {
@@ -963,13 +1260,12 @@ function renderTable() {
     return;
   }
 
-  const rowsHtml = list.map((r) => {
+  tableBody.innerHTML = list.map((r) => {
     const statusClass = r.ok ? "online" : "offline";
     const statusText = r.ok ? "在线" : "离线";
     const streakClass = r.streak === 0 ? "zero" : r.streak >= 5 ? "high" : "low";
     const rtt = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
     const totalMs = r.total_ms.toFixed(1) + " ms";
-    const err = r.err || "";
     const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
     return `
       <tr>
@@ -980,24 +1276,17 @@ function renderTable() {
         <td class="mono">${rtt}</td>
         <td class="mono">${totalMs}</td>
         <td><span class="streak-badge ${streakClass}">${r.streak}</span></td>
-        <td class="err-text">${escapeHtml(err)}</td>
+        <td class="err-text">${escapeHtml(r.err || "")}</td>
         <td><canvas class="sparkline" id="${sparkId}" width="80" height="24"></canvas></td>
       </tr>
     `;
   }).join("");
-
-  tableBody.innerHTML = rowsHtml;
 
   list.forEach((r) => {
     const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
     const canvas = document.getElementById(sparkId);
     if (canvas) drawSparkline(canvas, state.rttHistory[r.name] || []);
   });
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function drawSparkline(canvas, values) {
@@ -1047,16 +1336,15 @@ function drawSparkline(canvas, values) {
   ctx.fill();
 }
 
-/* ============ 日志染色 ============ */
+// ---------- 日志染色 ----------
 function colorizeLogLine(line) {
   let html = escapeHtml(line);
-  // 先替换"TCP 超时"，避免和"离线"冲突
-  html = html.replace(/TCP 超时/g, '\u0001TCP\u0002');
-  html = html.replace(/无回包/g, '\u0001NOREPLY\u0002');
-  html = html.replace(/拒绝连接/g, '\u0001REFUSED\u0002');
-  html = html.replace(/回包非 F4 44/g, '\u0001BADPKT\u0002');
-  html = html.replace(/离线/g, '\u0001OFFLINE\u0002');
-  html = html.replace(/在线/g, '\u0001ONLINE\u0002');
+  html = html.replace(/TCP 超时/g, "\u0001TCP\u0002");
+  html = html.replace(/无回包/g, "\u0001NOREPLY\u0002");
+  html = html.replace(/拒绝连接/g, "\u0001REFUSED\u0002");
+  html = html.replace(/回包非 F4 44/g, "\u0001BADPKT\u0002");
+  html = html.replace(/离线/g, "\u0001OFFLINE\u0002");
+  html = html.replace(/在线/g, "\u0001ONLINE\u0002");
 
   html = html.replace(/\u0001TCP\u0002/g, '<span class="kw-red">TCP 超时</span>');
   html = html.replace(/\u0001NOREPLY\u0002/g, '<span class="kw-red">无回包</span>');
@@ -1073,19 +1361,16 @@ function renderLogs() {
     logContent.textContent = "暂无日志...";
     return;
   }
-
   const wasAtBottom = logContent.scrollTop + logContent.clientHeight >= logContent.scrollHeight - 20;
-
   logContent.innerHTML = lines
     .map((line) => `<span class="log-line">${colorizeLogLine(line)}</span>`)
     .join("\n");
-
   if (state.autoScroll && wasAtBottom) {
     logContent.scrollTop = logContent.scrollHeight;
   }
 }
 
-/* ============ 初始化 ============ */
+// ---------- 初始化 ----------
 function init() {
   if (state.backendUrl) {
     $("backendUrl").value = state.backendUrl;
@@ -1094,9 +1379,9 @@ function init() {
     fetchLogs();
   } else {
     showModal("欢迎使用",
-      "请先在左侧“后端地址”里填写你的 Render 地址，然后点击“保存后端地址”。");
+      "请先在左侧“后端地址”里填写你的 Render 地址，然后点击“保存后端地址”。\n\n如需了解更多，可点右上角 ? 查看使用说明。");
   }
-  setInterval(fetchStatus, POLL_INTERVAL);
+  setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
 }
 

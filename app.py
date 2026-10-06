@@ -39,26 +39,43 @@ DEFAULT_CONFIG = {
     "interval": 20,
     "timeout": 1.5,
     "alert_streak": 5,
-    "bark_key": "",
-    "timezone_offset": 8,   # 北京时间 UTC+8
+    "bark_keys": [],          # 新格式：[{"key": "...", "enabled": true}, ...]
+    "timezone_offset": 8,
+    "sidebar_collapsed": False,
     "servers": [],
 }
+
+_config_lock = threading.Lock()
 
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
         save_config(DEFAULT_CONFIG)
-        return dict(DEFAULT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONFIG))
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             cfg = json.load(f)
+        # 旧格式 bark_key（字符串）→ 新格式 bark_keys（列表）
+        if "bark_key" in cfg and not isinstance(cfg.get("bark_keys"), list):
+            old = cfg.pop("bark_key", "") or ""
+            cfg["bark_keys"] = [{"key": old, "enabled": True}] if old.strip() else []
         for k, v in DEFAULT_CONFIG.items():
             cfg.setdefault(k, v)
         for s in cfg.get("servers", []):
             s.setdefault("enabled", True)
+        # 清洗 bark_keys，保证格式
+        cleaned = []
+        for bk in cfg.get("bark_keys", []):
+            if isinstance(bk, str):
+                bk = {"key": bk, "enabled": True}
+            key = (bk.get("key") or "").strip()
+            if not key:
+                continue
+            cleaned.append({"key": key, "enabled": bool(bk.get("enabled", True))})
+        cfg["bark_keys"] = cleaned
         return cfg
     except Exception:
-        return dict(DEFAULT_CONFIG)
+        return json.loads(json.dumps(DEFAULT_CONFIG))
 
 
 def save_config(cfg):
@@ -83,7 +100,6 @@ STATE = {
     "timeout_logs": [],
 }
 STATE_LOCK = threading.Lock()
-CONFIG_LOCK = threading.Lock()
 
 monitor_thread = None
 stop_event = threading.Event()
@@ -128,7 +144,6 @@ async def check_one(name, ip, port, timeout, sem):
                 return name, ip, False, 0.0, (time.perf_counter() - start) * 1000, str(e)
 
             rtt_ms = (time.perf_counter() - start) * 1000
-
             writer.write(PROBE_CIPHER)
             await writer.drain()
 
@@ -165,11 +180,11 @@ async def check_one(name, ip, port, timeout, sem):
                     pass
 
 
-def send_bark_alert(bark_key, name, ip, port, first_timeout_time, streak):
-    if not bark_key:
+def send_bark_alert(device_key, name, ip, port, first_timeout_time, streak):
+    if not device_key:
         return False
     payload = {
-        "device_key": bark_key,
+        "device_key": device_key,
         "title": f"⚠️ 服务器离线：{name}",
         "body": (
             f"服务器：{name}\n"
@@ -191,6 +206,17 @@ def send_bark_alert(bark_key, name, ip, port, first_timeout_time, streak):
         return False
 
 
+def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, streak):
+    """遍历所有已启用的 Bark 密钥并推送"""
+    for bk in bark_keys:
+        if not bk.get("enabled", True):
+            continue
+        key = (bk.get("key") or "").strip()
+        if not key:
+            continue
+        send_bark_alert(key, name, ip, port, first_timeout_time, streak)
+
+
 async def monitor_loop(initial_cfg):
     sem = asyncio.Semaphore(20)
     streak_map = {}
@@ -206,20 +232,20 @@ async def monitor_loop(initial_cfg):
     while not stop_event.is_set():
         round_count += 1
 
-        # 每轮重新读配置，支持动态修改 enabled / interval / 服务器列表
         try:
-            with CONFIG_LOCK:
+            with _config_lock:
                 cfg = load_config()
             port = int(cfg.get("port", 6732))
             interval = float(cfg.get("interval", 20))
             timeout = float(cfg.get("timeout", 1.5))
             alert_streak = int(cfg.get("alert_streak", 5))
-            bark_key = cfg.get("bark_key", "")
+            bark_keys = cfg.get("bark_keys", [])
             tz_offset = int(cfg.get("timezone_offset", 8))
             servers = [s for s in cfg.get("servers", []) if s.get("enabled", True)]
         except Exception as e:
             print(f"[monitor] 读配置失败：{e}")
             servers = []
+            bark_keys = []
             interval, tz_offset = 20, 8
 
         try:
@@ -290,11 +316,7 @@ async def monitor_loop(initial_cfg):
                         "last_check": now_s,
                     }
 
-            if servers:
-                log_line = " ".join(log_parts)
-            else:
-                log_line = f"[{now_s}] 无启用的服务器"
-
+            log_line = " ".join(log_parts) if servers else f"[{now_s}] 无启用的服务器"
             append_log_to_file(CHECK_LOG_FILE, log_line, max_lines=MAX_LOG_ENTRIES)
 
             with STATE_LOCK:
@@ -304,14 +326,15 @@ async def monitor_loop(initial_cfg):
                     STATE["logs"] = STATE["logs"][-MAX_LOG_ENTRIES:]
 
             for name, ip, first_t, streak in alerts_to_send:
-                await asyncio.to_thread(send_bark_alert, bark_key, name, ip, port, first_t, streak)
+                await asyncio.to_thread(
+                    send_bark_alerts_to_all, bark_keys, name, ip, port, first_t, streak
+                )
 
         except Exception as e:
             print(f"[monitor] 本轮异常：{e}")
             import traceback
             traceback.print_exc()
 
-        # 分段 sleep，可被 stop_event 打断，不会卡住
         try:
             waited = 0.0
             step = 0.2
@@ -353,36 +376,63 @@ def index():
 @app.route("/api/status")
 def api_status():
     with STATE_LOCK:
-        tz = STATE.get("timezone_offset", 8)
-        return jsonify({
+        result = {
             "running": STATE["running"],
             "start_time": STATE["start_time"],
             "last_check": STATE["last_check"],
-            "timezone_offset": tz,
-            "server_time": now_str(tz),
+            "timezone_offset": STATE.get("timezone_offset", 8),
+            "server_time": now_str(STATE.get("timezone_offset", 8)),
             "results": list(STATE["results"].values()),
-        })
+        }
+    with _config_lock:
+        cfg = load_config()
+    result["sidebar_collapsed"] = bool(cfg.get("sidebar_collapsed", False))
+    result["bark_keys"] = cfg.get("bark_keys", [])
+    result["servers_config"] = cfg.get("servers", [])
+    return jsonify(result)
 
 
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
-    with CONFIG_LOCK:
+    with _config_lock:
         return jsonify(load_config())
 
 
 @app.route("/api/config", methods=["POST"])
 def api_set_config():
     data = request.get_json(force=True) or {}
-    with CONFIG_LOCK:
+    with _config_lock:
         cfg = load_config()
         for k in ("port", "interval", "timeout", "alert_streak",
-                  "bark_key", "servers", "timezone_offset"):
+                  "bark_keys", "servers", "timezone_offset",
+                  "sidebar_collapsed"):
             if k in data:
                 cfg[k] = data[k]
+        # 清洗 bark_keys
+        cleaned = []
+        for bk in cfg.get("bark_keys", []):
+            if isinstance(bk, str):
+                bk = {"key": bk, "enabled": True}
+            key = (bk.get("key") or "").strip()
+            if not key:
+                continue
+            cleaned.append({"key": key, "enabled": bool(bk.get("enabled", True))})
+        cfg["bark_keys"] = cleaned
         for s in cfg.get("servers", []):
             s.setdefault("enabled", True)
         save_config(cfg)
     return jsonify({"ok": True, "config": cfg})
+
+
+@app.route("/api/sidebar/toggle", methods=["POST"])
+def api_sidebar_toggle():
+    data = request.get_json(force=True) or {}
+    collapsed = bool(data.get("collapsed", False))
+    with _config_lock:
+        cfg = load_config()
+        cfg["sidebar_collapsed"] = collapsed
+        save_config(cfg)
+    return jsonify({"ok": True, "collapsed": collapsed})
 
 
 @app.route("/api/servers/toggle", methods=["POST"])
@@ -392,7 +442,7 @@ def api_toggle_server():
     enabled = bool(data.get("enabled", True))
     if not name:
         return jsonify({"ok": False, "msg": "缺少 name"})
-    with CONFIG_LOCK:
+    with _config_lock:
         cfg = load_config()
         found = False
         for s in cfg.get("servers", []):
@@ -413,7 +463,7 @@ def api_add_server():
     ip = (data.get("ip") or "").strip()
     if not name or not ip:
         return jsonify({"ok": False, "msg": "需要 name 和 ip"})
-    with CONFIG_LOCK:
+    with _config_lock:
         cfg = load_config()
         cfg.setdefault("servers", []).append({"name": name, "ip": ip, "enabled": True})
         save_config(cfg)
@@ -422,7 +472,7 @@ def api_add_server():
 
 @app.route("/api/servers/clear", methods=["POST"])
 def api_clear_servers():
-    with CONFIG_LOCK:
+    with _config_lock:
         cfg = load_config()
         cfg["servers"] = []
         save_config(cfg)
@@ -436,7 +486,7 @@ def api_start():
     global monitor_thread
     if monitor_thread and monitor_thread.is_alive():
         return jsonify({"ok": False, "msg": "监控已在运行"})
-    with CONFIG_LOCK:
+    with _config_lock:
         cfg = load_config()
     if not cfg.get("servers"):
         return jsonify({"ok": False, "msg": "服务器列表为空，请先配置"})
