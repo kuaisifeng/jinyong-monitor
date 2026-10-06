@@ -21,6 +21,13 @@
     --warning: #ffb74d;
     --radius: 12px;
     --shadow: 0 4px 20px rgba(0,0,0,0.35);
+    /* 复选框配色 */
+    --cb-border: #6b7794;
+    --cb-border-hover: #97a8cc;
+    --cb-bg: #1a2138;
+    --cb-bg-hover: #202844;
+    --cb-checked: #4d9eff;
+    --cb-checked-glow: rgba(77,158,255,0.45);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -151,7 +158,7 @@
   }
   .field input:disabled, .field textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* 复选列表 */
+  /* ========= 复选列表（需求 2 重做） ========= */
   .check-list {
     max-height: 220px; overflow-y: auto;
     border: 1px solid var(--border); border-radius: 8px;
@@ -159,16 +166,65 @@
     -webkit-overflow-scrolling: touch;
   }
   .check-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 8px; border-radius: 6px; cursor: pointer;
     transition: background 0.15s; font-size: 12px;
-    min-height: 32px;
+    min-height: 34px;
   }
   .check-item:hover { background: var(--bg-card-hover); }
-  .check-item input[type="checkbox"] {
-    width: 16px; height: 16px; accent-color: var(--accent);
-    cursor: pointer; flex-shrink: 0;
+  .check-item:hover input[type="checkbox"] {
+    border-color: var(--cb-border-hover) !important;
+    background: var(--cb-bg-hover) !important;
   }
+
+  /* 自定义复选框 —— 高对比度 */
+  .check-item input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    border: 2px solid var(--cb-border);
+    border-radius: 5px;
+    background: var(--cb-bg);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s ease;
+    margin: 0;
+    padding: 0;
+    outline: none;
+  }
+  .check-item input[type="checkbox"]:hover {
+    border-color: var(--cb-border-hover);
+    background: var(--cb-bg-hover);
+  }
+  .check-item input[type="checkbox"]:focus {
+    box-shadow: 0 0 0 2px rgba(77,158,255,0.3);
+  }
+  .check-item input[type="checkbox"]:checked {
+    background: var(--cb-checked);
+    border-color: var(--cb-checked);
+    box-shadow: 0 0 10px var(--cb-checked-glow);
+  }
+  .check-item input[type="checkbox"]:checked:hover {
+    background: #6cafff;
+    border-color: #6cafff;
+  }
+  /* 白色对勾 */
+  .check-item input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 10px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
   .check-item .s-name {
     color: var(--text); font-weight: 500; flex-shrink: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -358,16 +414,12 @@
     -webkit-appearance: none; touch-action: manipulation;
   }
   .modal button.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
-  .modal .readme-section {
-    margin-bottom: 16px;
-  }
+  .modal .readme-section { margin-bottom: 16px; }
   .modal .readme-section h4 {
     color: var(--accent); font-size: 13px; margin-bottom: 6px;
     font-weight: 600;
   }
-  .modal .readme-section ul {
-    list-style: none; padding-left: 0;
-  }
+  .modal .readme-section ul { list-style: none; padding-left: 0; }
   .modal .readme-section li {
     color: var(--text-dim); font-size: 12px;
     line-height: 1.7; padding-left: 16px; position: relative;
@@ -403,7 +455,6 @@
     .logo span:last-child { display: none; }
     .main { height: calc(100vh - 52px); }
 
-    /* iOS 关键修复：折叠后仍保留 44px 宽度，保证按钮永远可点击 */
     .sidebar {
       position: absolute; top: 52px; left: 0;
       height: calc(100vh - 52px); z-index: 50;
@@ -412,7 +463,7 @@
     }
     .sidebar:not(.collapsed) { width: 280px; }
     .sidebar.collapsed {
-      width: 44px !important;    /* 关键：不是 0 */
+      width: 44px !important;
       border-right: 1px solid var(--border);
       overflow: visible;
     }
@@ -431,6 +482,20 @@
     .clock { display: none; }
     .table-wrapper { max-height: 40%; }
     .toolbar input { max-width: none; }
+
+    /* 移动端复选框稍大，触控友好 */
+    .check-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      min-height: 20px;
+    }
+    .check-item input[type="checkbox"]:checked::after {
+      left: 5px;
+      top: 1px;
+      width: 5px;
+      height: 10px;
+    }
   }
 </style>
 </head>
@@ -608,7 +673,7 @@
       <h4>⚙️ 快速开始</h4>
       <ul>
         <li>在左侧「后端地址」里填入你的 Render 地址</li>
-        <li>点击「保存后端地址」，等待配置自动加载</li>
+        <li>点击「保存后端地址」，会自动拉取后端全局配置</li>
         <li>编辑「服务器列表」，每行格式：<code>名称 IP</code></li>
         <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
         <li>点击「保存配置到后端」→「▶ 启动监控」</li>
@@ -627,9 +692,7 @@
     <div class="readme-section">
       <h4>🛰 探针原理</h4>
       <ul>
-        <li>不是简单 TCP ping，而是发送 XOR 0x9F 加密的登录封包</li>
         <li>服务器正确解密并返回 payload[0]=0x01 才算「在线」</li>
-        <li>比端口扫描准确，能识别服务是否真正可用</li>
       </ul>
     </div>
 
@@ -647,7 +710,6 @@
       <ul>
         <li>浏览器网页关闭不影响后端监控（后端在 Render 上持续运行）</li>
         <li>Render 免费版 15 分钟无流量会休眠，已配置 UptimeRobot 保活</li>
-        <li>账号密码已在日志中明文暴露，建议修改</li>
       </ul>
     </div>
 
@@ -661,7 +723,7 @@
 
 <script>
 /* ================================================================
- *  前端逻辑 · 所有运行时状态从后端拉取，本地不保存
+ *  前端逻辑 · 所有运行时状态从后端拉取，本地只保存后端地址
  * ================================================================ */
 const state = {
   backendUrl: localStorage.getItem("backendUrl") || "",
@@ -679,11 +741,12 @@ const state = {
   timezoneOffset: 8,
   sidebarCollapsed: false,
   barkKeys: [],
+  serversTextDirty: false,   // 用户是否手动改过服务器列表
 };
 
-// 前端轮询间隔：2 秒（状态）+ 3 秒（日志）
 const POLL_STATUS = 2000;
 const POLL_LOGS = 3000;
+const POLL_CONFIG = 5000;   // 每 5 秒强制同步一次完整配置
 const MAX_RTT_HISTORY = 30;
 
 const $ = (id) => document.getElementById(id);
@@ -748,7 +811,6 @@ $("collapseBtn").addEventListener("click", (e) => {
   const next = !sidebarEl.classList.contains("collapsed");
   setSidebarCollapsed(next, true);
 });
-// iOS 兼容：同时监听 touchend，避免 click 事件丢失
 $("collapseBtn").addEventListener("touchend", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -775,8 +837,8 @@ $("modalClose").addEventListener("click", () => $("modalMask").classList.remove(
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
 
-// ---------- 后端地址保存 ----------
-$("saveBackendBtn").addEventListener("click", () => {
+// ---------- 后端地址保存（需求 3 修复核心） ----------
+$("saveBackendBtn").addEventListener("click", async () => {
   let url = $("backendUrl").value.trim();
   if (!url) { showModal("提示", "后端地址不能为空"); return; }
   if (!/^https?:\/\//.test(url)) url = "https://" + url;
@@ -784,10 +846,15 @@ $("saveBackendBtn").addEventListener("click", () => {
   localStorage.setItem("backendUrl", state.backendUrl);
   $("backendUrl").value = state.backendUrl;
   state.configLoaded = false;
-  loadConfig();
-  fetchStatus();
-  fetchLogs();
-  showModal("已保存", "后端地址已保存：\n" + state.backendUrl);
+  state.serversTextDirty = false;
+  showLoading(true);
+  try {
+    // 一次性拉取全部：完整 config + 运行状态 + 日志
+    await loadConfig(true);
+    await fetchStatus();
+    await fetchLogs();
+  } finally { showLoading(false); }
+  showModal("已保存", "后端地址已保存，已从后端拉取完整配置。\n" + state.backendUrl);
 });
 
 // ---------- 解析服务器文本 ----------
@@ -806,21 +873,28 @@ function parseServersText(text) {
   return servers;
 }
 
-// ---------- 加载配置 ----------
-async function loadConfig() {
-  if (!state.backendUrl || state.configLoaded) return;
+// ---------- 加载完整配置（支持 force） ----------
+async function loadConfig(force = false) {
+  if (!state.backendUrl) return;
+  if (state.configLoaded && !force) return;
   try {
     const r = await fetch(apiUrl("/api/config"));
     const cfg = await r.json();
+
     state.config = cfg;
-    $("serversText").value = (cfg.servers || []).map((s) => `${s.name} ${s.ip}`).join("\n");
+
+    // 编辑态下，若用户没有手动改过 textarea，才覆盖
+    if (!state.running && !state.serversTextDirty) {
+      $("serversText").value = (cfg.servers || [])
+        .map((s) => `${s.name} ${s.ip}`).join("\n");
+    }
+
     $("portInput").value = cfg.port || 6732;
     $("intervalInput").value = cfg.interval || 20;
     $("alertStreakInput").value = cfg.alert_streak || 5;
     $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
 
-    // Bark 密钥
     state.barkKeys = (cfg.bark_keys || []).map((b) => ({
       key: b.key, enabled: b.enabled !== false
     }));
@@ -845,7 +919,6 @@ $("saveConfigBtn").addEventListener("click", async () => {
   };
 
   if (state.running) {
-    // 运行态：服务器列表和 Bark 列表由复选 / 编辑控件单独管理，这里不动
     showLoading(true);
     try {
       const r = await fetch(apiUrl("/api/config"), {
@@ -861,13 +934,11 @@ $("saveConfigBtn").addEventListener("click", async () => {
       } else {
         showModal("保存失败", data.msg || "未知错误");
       }
-    } catch (e) {
-      showModal("保存失败", String(e));
-    } finally { showLoading(false); }
+    } catch (e) { showModal("保存失败", String(e)); }
+    finally { showLoading(false); }
     return;
   }
 
-  // 编辑态：保存服务器列表 + Bark 列表
   const servers = parseServersText($("serversText").value);
   const cfg = { ...baseCfg, servers, bark_keys: state.barkKeys };
 
@@ -882,14 +953,19 @@ $("saveConfigBtn").addEventListener("click", async () => {
     if (data.ok) {
       state.config = data.config;
       state.configLoaded = true;
+      state.serversTextDirty = false;  // 保存成功，清除 dirty
       state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
       showModal("保存成功", `已保存 ${servers.length} 台服务器、${state.barkKeys.length} 个 Bark 密钥。`);
     } else {
       showModal("保存失败", data.msg || "未知错误");
     }
-  } catch (e) {
-    showModal("保存失败", String(e));
-  } finally { showLoading(false); }
+  } catch (e) { showModal("保存失败", String(e)); }
+  finally { showLoading(false); }
+});
+
+// 用户编辑服务器列表时标记 dirty
+$("serversText").addEventListener("input", () => {
+  state.serversTextDirty = true;
 });
 
 // ---------- 启动 / 停止 ----------
@@ -900,7 +976,11 @@ $("startBtn").addEventListener("click", async () => {
     const r = await fetch(apiUrl("/api/start"), { method: "POST" });
     const data = await r.json();
     if (!data.ok) showModal("启动失败", data.msg || "未知错误");
-    else { state.running = true; updateRunningState(true); }
+    else {
+      state.running = true;
+      updateRunningState(true);
+      await loadConfig(true);
+    }
   } catch (e) { showModal("启动失败", String(e)); }
   finally { showLoading(false); }
 });
@@ -912,6 +992,7 @@ $("stopBtn").addEventListener("click", async () => {
     await fetch(apiUrl("/api/stop"), { method: "POST" });
     state.running = false;
     updateRunningState(false);
+    await loadConfig(true);
   } catch (e) { console.warn(e); }
   finally { showLoading(false); }
 });
@@ -1085,7 +1166,6 @@ async function saveBarkKeysToBackend() {
 
 $("barkEditToggle").addEventListener("click", async () => {
   if (barkEditMode) {
-    // 退出编辑：解析 textarea，按密钥内容保留原启用状态
     const text = $("barkEditTextarea").value;
     const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     const oldMap = {};
@@ -1148,24 +1228,22 @@ filterInput.addEventListener("input", () => {
   renderTable();
 });
 
-// ---------- 拉取状态（核心：多设备同步） ----------
+// ---------- 拉取状态（多设备同步核心） ----------
 async function fetchStatus() {
   if (!state.backendUrl) return;
   try {
     const r = await fetch(apiUrl("/api/status"));
     const data = await r.json();
 
-    // 运行状态
     const wasRunning = state.running;
     state.running = !!data.running;
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
 
-    if (state.running && !wasRunning) {
-      if (!state.config) await loadConfig();
-      updateRunningState(true);
-    } else if (!state.running && wasRunning) {
-      updateRunningState(false);
+    // 运行状态变化时同步完整配置
+    if (state.running !== wasRunning) {
+      await loadConfig(true);
+      updateRunningState(state.running);
     }
 
     if (state.running) {
@@ -1186,7 +1264,7 @@ async function fetchStatus() {
       }
     }
 
-    // Bark 密钥列表同步（非编辑模式时）
+    // Bark 列表同步（非编辑模式）
     if (!barkEditMode && Array.isArray(data.bark_keys)) {
       const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false }));
       if (JSON.stringify(newKeys) !== JSON.stringify(state.barkKeys)) {
@@ -1195,12 +1273,17 @@ async function fetchStatus() {
       }
     }
 
-    // 服务器列表同步（非编辑态时）
+    // 服务器列表同步：只在运行态自动更新（避免覆盖编辑态用户输入）
     if (state.running && Array.isArray(data.servers_config)) {
       if (!state.config) state.config = {};
-      const newServers = data.servers_config;
-      if (JSON.stringify(newServers) !== JSON.stringify(state.config.servers)) {
-        state.config.servers = newServers;
+      const newServers = data.servers_config.map((s) => ({
+        name: s.name, ip: s.ip, enabled: s.enabled !== false
+      }));
+      const localServers = (state.config.servers || []).map((s) => ({
+        name: s.name, ip: s.ip, enabled: s.enabled !== false
+      }));
+      if (JSON.stringify(newServers) !== JSON.stringify(localServers)) {
+        state.config.servers = data.servers_config;
         renderServerList();
       }
     }
@@ -1374,15 +1457,18 @@ function renderLogs() {
 function init() {
   if (state.backendUrl) {
     $("backendUrl").value = state.backendUrl;
-    loadConfig();
+    // 强制拉取完整配置 + 状态 + 日志
+    loadConfig(true);
     fetchStatus();
     fetchLogs();
   } else {
     showModal("欢迎使用",
-      "请先在左侧“后端地址”里填写你的 Render 地址，然后点击“保存后端地址”。\n\n如需了解更多，可点右上角 ? 查看使用说明。");
+      "请先在左侧「后端地址」里填写你的 Render 地址，然后点击「保存后端地址」。\n\n如需了解更多，可点右上角 ? 查看使用说明。");
   }
   setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
+  // 每 5 秒强制同步一次完整配置（多设备同步关键）
+  setInterval(() => { if (state.backendUrl) loadConfig(true); }, POLL_CONFIG);
 }
 
 init();

@@ -39,7 +39,7 @@ DEFAULT_CONFIG = {
     "interval": 20,
     "timeout": 1.5,
     "alert_streak": 5,
-    "bark_keys": [],          # 新格式：[{"key": "...", "enabled": true}, ...]
+    "bark_keys": [],
     "timezone_offset": 8,
     "sidebar_collapsed": False,
     "servers": [],
@@ -55,7 +55,6 @@ def load_config():
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-        # 旧格式 bark_key（字符串）→ 新格式 bark_keys（列表）
         if "bark_key" in cfg and not isinstance(cfg.get("bark_keys"), list):
             old = cfg.pop("bark_key", "") or ""
             cfg["bark_keys"] = [{"key": old, "enabled": True}] if old.strip() else []
@@ -63,7 +62,6 @@ def load_config():
             cfg.setdefault(k, v)
         for s in cfg.get("servers", []):
             s.setdefault("enabled", True)
-        # 清洗 bark_keys，保证格式
         cleaned = []
         for bk in cfg.get("bark_keys", []):
             if isinstance(bk, str):
@@ -103,6 +101,28 @@ STATE_LOCK = threading.Lock()
 
 monitor_thread = None
 stop_event = threading.Event()
+
+
+def restore_logs_from_file():
+    """启动时从文件恢复历史日志到内存，避免 Render 重启后日志清空"""
+    if os.path.exists(CHECK_LOG_FILE):
+        try:
+            with open(CHECK_LOG_FILE, "r", encoding="utf-8") as f:
+                lines = [l.rstrip("\n") for l in f.readlines() if l.strip()]
+            with STATE_LOCK:
+                STATE["logs"] = lines[-MAX_LOG_ENTRIES:]
+            print(f"[boot] 从 check_log.txt 恢复了 {len(STATE['logs'])} 条历史检测日志")
+        except Exception as e:
+            print(f"[boot] 恢复检测日志失败：{e}")
+    if os.path.exists(TIMEOUT_LOG_FILE):
+        try:
+            with open(TIMEOUT_LOG_FILE, "r", encoding="utf-8") as f:
+                lines = [l.rstrip("\n") for l in f.readlines() if l.strip()]
+            with STATE_LOCK:
+                STATE["timeout_logs"] = lines[-500:]
+            print(f"[boot] 从 timeout_log.txt 恢复了 {len(STATE['timeout_logs'])} 条历史超时日志")
+        except Exception as e:
+            print(f"[boot] 恢复超时日志失败：{e}")
 
 
 def xor_decrypt(data, key=XOR_KEY):
@@ -207,7 +227,6 @@ def send_bark_alert(device_key, name, ip, port, first_timeout_time, streak):
 
 
 def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, streak):
-    """遍历所有已启用的 Bark 密钥并推送"""
     for bk in bark_keys:
         if not bk.get("enabled", True):
             continue
@@ -408,7 +427,6 @@ def api_set_config():
                   "sidebar_collapsed"):
             if k in data:
                 cfg[k] = data[k]
-        # 清洗 bark_keys
         cleaned = []
         for bk in cfg.get("bark_keys", []):
             if isinstance(bk, str):
@@ -528,6 +546,11 @@ def api_clear_logs():
                 pass
     return jsonify({"ok": True})
 
+
+# ==================== 启动 ====================
+
+# 启动时先从文件恢复历史日志
+restore_logs_from_file()
 
 _boot_cfg = load_config()
 if _boot_cfg.get("servers"):
