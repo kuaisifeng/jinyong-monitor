@@ -170,7 +170,7 @@
     min-height: 34px;
   }
   .check-item:hover { background: var(--bg-card-hover); }
-  .check-item:hover input[type="checkbox"] {
+  .check-item:hover .cb-dark {
     border-color: var(--cb-border-hover) !important;
     background: var(--cb-bg-hover) !important;
   }
@@ -214,8 +214,6 @@
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
-
-  .check-item input[type="checkbox"] { /* 兼容保留 */ }
 
   .check-item .s-name {
     color: var(--text); font-weight: 500; flex-shrink: 0;
@@ -281,45 +279,49 @@
   .maint-rule {
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 8px;
     background: var(--bg-input);
   }
   .maint-rule-title {
-    font-size: 11px;
-    color: var(--text-mute);
-    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
   .maint-days {
-    display: flex; gap: 8px; flex-wrap: wrap;
-    margin-bottom: 10px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 12px;
   }
   .maint-days label {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text);
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     transition: all 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
   }
   .maint-days label:hover {
     border-color: var(--accent);
     background: var(--bg-card-hover);
   }
+  .maint-days label span {
+    font-weight: 500;
+    line-height: 1;
+  }
   .maint-times {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 10px;
   }
   .maint-times input[type="time"] {
     flex: 1;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 7px 10px;
+    padding: 8px 10px;
     color: var(--text);
     font-size: 13px;
     font-family: "Consolas", "Monaco", monospace;
@@ -782,8 +784,8 @@ const DEFAULT_PORT = 6732;
 
 // 固定维护规则模板
 const FIXED_MAINT_RULES = [
-  { allowedDays: [1, 2, 3, 4, 5], title: "工作日（周一~周五）", defaultStart: "07:00", defaultEnd: "07:30" },
-  { allowedDays: [6, 7], title: "周末（周六~周日）", defaultStart: "09:30", defaultEnd: "10:00" },
+  { allowedDays: [1, 2, 3, 4, 5], title: "工作日", defaultStart: "07:00", defaultEnd: "07:30" },
+  { allowedDays: [6, 7], title: "周末", defaultStart: "09:30", defaultEnd: "10:00" },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -894,22 +896,17 @@ function parseServersText(text) {
 
 // ---------- 维护时段规范化（固定 2 条） ----------
 function normalizeMaintenance(cfgWindows) {
-  // 默认两条规则
   const rules = FIXED_MAINT_RULES.map((tpl) => ({
     days: tpl.allowedDays.slice(),
     start: tpl.defaultStart,
     end: tpl.defaultEnd,
   }));
-
   if (!Array.isArray(cfgWindows)) return rules;
-
-  // 按“是否包含周一~周五 / 周六周日”分别匹配到对应规则
   for (const w of cfgWindows) {
     const days = (w.days || []).filter((d) => d >= 1 && d <= 7);
     if (!days.length) continue;
     const hasWeekday = days.some((d) => d <= 5);
     const hasWeekend = days.some((d) => d >= 6);
-
     if (hasWeekday && !hasWeekend) {
       rules[0].days = days.filter((d) => d <= 5).sort((a, b) => a - b);
       rules[0].start = w.start || rules[0].start;
@@ -949,7 +946,6 @@ async function loadConfig(force = false) {
     }));
     renderBarkList();
 
-    // 维护时段：强制规范化为固定 2 条
     state.maintenanceWindows = normalizeMaintenance(cfg.maintenance_windows);
     renderMaintenanceList();
 
@@ -1183,12 +1179,12 @@ $("barkEditToggle").addEventListener("click", async () => {
   renderBarkList();
 });
 
-// ---------- 维护时段（固定 2 条规则） ----------
-const WEEKDAY_NAMES = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
+// ---------- 维护时段 ----------
+const WEEKDAY_SHORT = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
+const WEEKDAY_FULL = { 1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五", 6: "周六", 7: "周日" };
 
-function formatDays(days) {
+function formatDaysShort(days) {
   if (!days || !days.length) return "（未勾选）";
-  const names = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const sorted = days.slice().sort((a, b) => a - b);
   const ranges = [];
   let start = sorted[0], prev = sorted[0];
@@ -1196,9 +1192,9 @@ function formatDays(days) {
     if (i < sorted.length && sorted[i] === prev + 1) {
       prev = sorted[i];
     } else {
-      if (start === prev) ranges.push(names[start]);
-      else if (prev === start + 1) ranges.push(names[start] + "、" + names[prev]);
-      else ranges.push(names[start] + "~" + names[prev]);
+      if (start === prev) ranges.push(WEEKDAY_FULL[start]);
+      else if (prev === start + 1) ranges.push(WEEKDAY_FULL[start] + "、" + WEEKDAY_FULL[prev]);
+      else ranges.push(WEEKDAY_FULL[start] + "~" + WEEKDAY_FULL[prev]);
       if (i < sorted.length) { start = sorted[i]; prev = sorted[i]; }
     }
   }
@@ -1230,11 +1226,14 @@ function renderMaintenanceList() {
       view.innerHTML = '<div class="check-empty">未配置，点击“编辑”添加</div>';
       return;
     }
-    view.innerHTML = rules.map((w, i) => `
-      <div class="check-item" style="cursor:default;">
-        <span class="s-maint">🔧 ${escapeHtml(FIXED_MAINT_RULES[i] ? FIXED_MAINT_RULES[i].title : "")} ${escapeHtml(formatDays(w.days))} ${escapeHtml(w.start)}~${escapeHtml(w.end)}</span>
-      </div>
-    `).join("");
+    view.innerHTML = rules.map((w, i) => {
+      const title = FIXED_MAINT_RULES[i] ? FIXED_MAINT_RULES[i].title : "";
+      return `
+        <div class="check-item" style="cursor:default;">
+          <span class="s-maint">🔧 ${escapeHtml(title)} ${escapeHtml(formatDaysShort(w.days))} ${escapeHtml(w.start)}~${escapeHtml(w.end)}</span>
+        </div>
+      `;
+    }).join("");
   }
 }
 
@@ -1247,12 +1246,12 @@ function renderMaintEditRules() {
       const checked = (w.days || []).includes(d) ? "checked" : "";
       return `<label>
         <input type="checkbox" class="cb-dark" data-idx="${i}" data-day="${d}" ${checked}>
-        周${WEEKDAY_NAMES[d]}
+        <span>${WEEKDAY_SHORT[d]}</span>
       </label>`;
     }).join("");
     return `
       <div class="maint-rule" data-idx="${i}">
-        <div class="maint-rule-title">${escapeHtml(tpl.title)}</div>
+        <div class="maint-rule-title">${escapeHtml(tpl.title)}维护时间</div>
         <div class="maint-days">${dayCbs}</div>
         <div class="maint-times">
           <input type="time" class="maint-start" data-idx="${i}" value="${w.start || tpl.defaultStart}">
@@ -1314,7 +1313,6 @@ async function saveMaintenanceToBackend() {
     });
     const data = await r.json();
     if (data.ok && data.config) {
-      // 后端返回后再次规范化，确保仍然是固定 2 条
       state.maintenanceWindows = normalizeMaintenance(data.config.maintenance_windows);
     }
     return true;
