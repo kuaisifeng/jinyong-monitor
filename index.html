@@ -94,7 +94,6 @@
 
   .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
-  /* 侧边栏 —— 用 flex 自然占位（含移动端） */
   .sidebar {
     width: 320px; background: var(--bg-card);
     border-right: 1px solid var(--border);
@@ -175,7 +174,9 @@
     border-color: var(--cb-border-hover) !important;
     background: var(--cb-bg-hover) !important;
   }
-  .check-item input[type="checkbox"] {
+
+  /* 高对比度自定义复选框（服务器 / Bark / 维护时段 共用） */
+  .cb-dark {
     -webkit-appearance: none;
     appearance: none;
     width: 18px; height: 18px;
@@ -189,22 +190,22 @@
     transition: all 0.15s ease;
     margin: 0; padding: 0; outline: none;
   }
-  .check-item input[type="checkbox"]:hover {
+  .cb-dark:hover {
     border-color: var(--cb-border-hover);
     background: var(--cb-bg-hover);
   }
-  .check-item input[type="checkbox"]:focus {
+  .cb-dark:focus {
     box-shadow: 0 0 0 2px rgba(77,158,255,0.3);
   }
-  .check-item input[type="checkbox"]:checked {
+  .cb-dark:checked {
     background: var(--cb-checked);
     border-color: var(--cb-checked);
     box-shadow: 0 0 10px var(--cb-checked-glow);
   }
-  .check-item input[type="checkbox"]:checked:hover {
+  .cb-dark:checked:hover {
     background: #6cafff; border-color: #6cafff;
   }
-  .check-item input[type="checkbox"]:checked::after {
+  .cb-dark:checked::after {
     content: "";
     position: absolute;
     left: 4px; top: 0px;
@@ -213,6 +214,9 @@
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
+
+  .check-item input[type="checkbox"] { /* 兼容保留 */ }
+
   .check-item .s-name {
     color: var(--text); font-weight: 500; flex-shrink: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -276,39 +280,48 @@
   /* ============ 维护时段编辑器 ============ */
   .maint-rule {
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    margin-bottom: 6px;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
     background: var(--bg-input);
   }
+  .maint-rule-title {
+    font-size: 11px;
+    color: var(--text-mute);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
   .maint-days {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    margin-bottom: 6px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 10px;
   }
   .maint-days label {
-    display: flex; align-items: center; gap: 3px;
-    font-size: 11px; color: var(--text-dim); cursor: pointer;
-    padding: 2px 6px; border-radius: 4px;
-    transition: background 0.15s;
-  }
-  .maint-days label:hover { background: var(--bg-card-hover); }
-  .maint-days input[type="checkbox"] {
-    width: 14px; height: 14px;
-    accent-color: var(--accent);
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text);
     cursor: pointer;
-    margin: 0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .maint-days label:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
   }
   .maint-times {
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 8px;
   }
   .maint-times input[type="time"] {
     flex: 1;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 5px 8px;
+    padding: 7px 10px;
     color: var(--text);
-    font-size: 12px;
+    font-size: 13px;
     font-family: "Consolas", "Monaco", monospace;
     -webkit-appearance: none;
     outline: none;
@@ -317,7 +330,7 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
   }
-  .maint-times span { color: var(--text-mute); font-size: 11px; }
+  .maint-times span { color: var(--text-mute); font-size: 12px; }
 
   .content {
     flex: 1; display: flex; flex-direction: column;
@@ -479,7 +492,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ========= iOS 移动端适配（需求 1：改为弹性布局） ========= */
   @media (max-width: 900px) {
     .topbar { padding: 0 8px; gap: 6px; height: 52px; }
     .topbar-notice { display: none; }
@@ -487,19 +499,9 @@
     .logo span:last-child { display: none; }
     .main { height: calc(100vh - 52px); }
 
-    /* 关键：不再使用 position:absolute，侧边栏参与 flex 布局 */
-    .sidebar {
-      width: 260px;
-      max-width: 70vw;
-    }
-    .sidebar.collapsed {
-      width: 44px !important;
-      max-width: 44px;
-    }
-    .sidebar.collapsed .sidebar-header {
-      padding: 14px 4px;
-      justify-content: center;
-    }
+    .sidebar { width: 260px; max-width: 70vw; }
+    .sidebar.collapsed { width: 44px !important; max-width: 44px; }
+    .sidebar.collapsed .sidebar-header { padding: 14px 4px; justify-content: center; }
     .sidebar.collapsed .sidebar-header span { display: none; }
     .sidebar.collapsed .collapse-btn {
       background: rgba(77,158,255,0.1);
@@ -512,11 +514,11 @@
     .table-wrapper { max-height: 40%; }
     .toolbar input { max-width: none; }
 
-    .check-item input[type="checkbox"] {
+    .cb-dark {
       width: 20px; height: 20px;
       min-width: 20px; min-height: 20px;
     }
-    .check-item input[type="checkbox"]:checked::after {
+    .cb-dark:checked::after {
       left: 5px; top: 1px;
       width: 5px; height: 10px;
     }
@@ -572,17 +574,14 @@
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
-      <!-- 维护时段（可视化） -->
+      <!-- 维护时段（固定 2 条规则） -->
       <div class="field">
         <div class="field-header">
           <label>Bark 免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
           <button class="btn-mini" id="maintEditToggle">编辑</button>
         </div>
         <div id="maintViewList" class="check-list" style="max-height:150px;"></div>
-        <div id="maintEditView" style="display:none;">
-          <div id="maintRulesList"></div>
-          <button class="btn-mini" id="addMaintRuleBtn" style="width:100%;margin-top:6px;">＋ 新增规则</button>
-        </div>
+        <div id="maintEditView" style="display:none;"></div>
       </div>
 
       <div class="field">
@@ -666,7 +665,7 @@
 
 <!-- README 弹窗 -->
 <div class="modal-mask" id="readmeMask">
-  <div class="modal" style="max-width:580px;">
+  <div class="modal" style="max-width:560px;">
     <h3 class="accent">📖 使用说明</h3>
 
     <div class="readme-section">
@@ -677,17 +676,6 @@
         <li>维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
         <li>点「▶ 启动监控」开始探测</li>
-      </ul>
-    </div>
-
-    <div class="readme-section">
-      <h4>🏗 系统架构</h4>
-      <ul>
-        <li><b>GitHub 仓库</b>：存放所有代码（app.py + index.html）</li>
-        <li><b>Render（后端）</b>：从 GitHub 拉取代码，运行 Python Flask 服务，负责探针检测、Bark 报警、状态存储</li>
-        <li><b>Cloudflare Pages（前端）</b>：从 GitHub 拉取 index.html，全球 CDN 托管，访问速度很快</li>
-        <li><b>UptimeRobot</b>：每 5 分钟访问一次 Render，防止免费实例 15 分钟休眠</li>
-        <li><b>数据流</b>：前端每 2 秒轮询后端 API，所有状态保存在后端，多设备自动同步</li>
       </ul>
     </div>
 
@@ -792,6 +780,12 @@ const POLL_CONFIG = 5000;
 const MAX_RTT_HISTORY = 30;
 const DEFAULT_PORT = 6732;
 
+// 固定维护规则模板
+const FIXED_MAINT_RULES = [
+  { allowedDays: [1, 2, 3, 4, 5], title: "工作日（周一~周五）", defaultStart: "07:00", defaultEnd: "07:30" },
+  { allowedDays: [6, 7], title: "周末（周六~周日）", defaultStart: "09:30", defaultEnd: "10:00" },
+];
+
 const $ = (id) => document.getElementById(id);
 const clockEl = $("clock");
 const runIndicator = $("runIndicator");
@@ -878,7 +872,7 @@ $("modalClose").addEventListener("click", () => $("modalMask").classList.remove(
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
 
-// ---------- 服务器文本解析（支持 名称 IP 端口 / 名称*IP*端口） ----------
+// ---------- 服务器文本解析 ----------
 function parseServersText(text) {
   const servers = [];
   text.split(/\r?\n/).forEach((line) => {
@@ -896,6 +890,37 @@ function parseServersText(text) {
     servers.push({ name, ip, port, enabled: true });
   });
   return servers;
+}
+
+// ---------- 维护时段规范化（固定 2 条） ----------
+function normalizeMaintenance(cfgWindows) {
+  // 默认两条规则
+  const rules = FIXED_MAINT_RULES.map((tpl) => ({
+    days: tpl.allowedDays.slice(),
+    start: tpl.defaultStart,
+    end: tpl.defaultEnd,
+  }));
+
+  if (!Array.isArray(cfgWindows)) return rules;
+
+  // 按“是否包含周一~周五 / 周六周日”分别匹配到对应规则
+  for (const w of cfgWindows) {
+    const days = (w.days || []).filter((d) => d >= 1 && d <= 7);
+    if (!days.length) continue;
+    const hasWeekday = days.some((d) => d <= 5);
+    const hasWeekend = days.some((d) => d >= 6);
+
+    if (hasWeekday && !hasWeekend) {
+      rules[0].days = days.filter((d) => d <= 5).sort((a, b) => a - b);
+      rules[0].start = w.start || rules[0].start;
+      rules[0].end = w.end || rules[0].end;
+    } else if (hasWeekend && !hasWeekday) {
+      rules[1].days = days.filter((d) => d >= 6).sort((a, b) => a - b);
+      rules[1].start = w.start || rules[1].start;
+      rules[1].end = w.end || rules[1].end;
+    }
+  }
+  return rules;
 }
 
 // ---------- 加载完整配置 ----------
@@ -924,11 +949,8 @@ async function loadConfig(force = false) {
     }));
     renderBarkList();
 
-    state.maintenanceWindows = (cfg.maintenance_windows || []).map((w) => ({
-      days: (w.days || []).slice(),
-      start: w.start || "07:00",
-      end: w.end || "07:30",
-    }));
+    // 维护时段：强制规范化为固定 2 条
+    state.maintenanceWindows = normalizeMaintenance(cfg.maintenance_windows);
     renderMaintenanceList();
 
     state.configLoaded = true;
@@ -1024,7 +1046,7 @@ function renderServerList() {
   }
   view.innerHTML = servers.map((s, i) => `
     <label class="check-item">
-      <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
+      <input type="checkbox" class="cb-dark" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
       <span class="s-name">${escapeHtml(s.name)}</span>
       <span class="s-ip">${escapeHtml(s.ip)}:${s.port || DEFAULT_PORT}</span>
     </label>
@@ -1111,7 +1133,7 @@ function renderBarkList() {
       const shortKey = b.key.length > 20 ? b.key.slice(0, 10) + "..." + b.key.slice(-6) : b.key;
       return `
         <label class="check-item">
-          <input type="checkbox" data-idx="${i}" ${b.enabled ? "checked" : ""}>
+          <input type="checkbox" class="cb-dark" data-idx="${i}" ${b.enabled ? "checked" : ""}>
           <span class="s-key" title="${escapeHtml(b.key)}">${escapeHtml(shortKey)}</span>
         </label>
       `;
@@ -1161,13 +1183,13 @@ $("barkEditToggle").addEventListener("click", async () => {
   renderBarkList();
 });
 
-// ---------- 维护时段（可视化） ----------
+// ---------- 维护时段（固定 2 条规则） ----------
 const WEEKDAY_NAMES = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
 
 function formatDays(days) {
-  if (!days || !days.length) return "";
-  const sorted = days.slice().sort((a, b) => a - b);
+  if (!days || !days.length) return "（未勾选）";
   const names = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const sorted = days.slice().sort((a, b) => a - b);
   const ranges = [];
   let start = sorted[0], prev = sorted[0];
   for (let i = 1; i <= sorted.length; i++) {
@@ -1203,40 +1225,43 @@ function renderMaintenanceList() {
     toggle.classList.remove("active");
     badge.textContent = "视图模式";
 
-    if (!state.maintenanceWindows.length) {
+    const rules = state.maintenanceWindows || [];
+    if (!rules.length) {
       view.innerHTML = '<div class="check-empty">未配置，点击“编辑”添加</div>';
       return;
     }
-    view.innerHTML = state.maintenanceWindows.map((w) => `
+    view.innerHTML = rules.map((w, i) => `
       <div class="check-item" style="cursor:default;">
-        <span class="s-maint">🔧 ${escapeHtml(formatDays(w.days))} ${escapeHtml(w.start)}~${escapeHtml(w.end)}</span>
+        <span class="s-maint">🔧 ${escapeHtml(FIXED_MAINT_RULES[i] ? FIXED_MAINT_RULES[i].title : "")} ${escapeHtml(formatDays(w.days))} ${escapeHtml(w.start)}~${escapeHtml(w.end)}</span>
       </div>
     `).join("");
   }
 }
 
 function renderMaintEditRules() {
-  const list = $("maintRulesList");
-  if (!state.maintenanceWindows.length) {
-    list.innerHTML = '<div class="check-empty" style="padding:10px;">暂无规则，点击下方“新增规则”</div>';
-    return;
-  }
-  list.innerHTML = state.maintenanceWindows.map((w, i) => `
-    <div class="maint-rule" data-idx="${i}">
-      <div class="maint-days">
-        ${[1,2,3,4,5,6,7].map((d) => {
-          const checked = (w.days || []).includes(d) ? "checked" : "";
-          return `<label><input type="checkbox" data-idx="${i}" data-day="${d}" ${checked}>${WEEKDAY_NAMES[d]}</label>`;
-        }).join("")}
+  const list = $("maintEditView");
+  list.innerHTML = state.maintenanceWindows.map((w, i) => {
+    const tpl = FIXED_MAINT_RULES[i];
+    if (!tpl) return "";
+    const dayCbs = tpl.allowedDays.map((d) => {
+      const checked = (w.days || []).includes(d) ? "checked" : "";
+      return `<label>
+        <input type="checkbox" class="cb-dark" data-idx="${i}" data-day="${d}" ${checked}>
+        周${WEEKDAY_NAMES[d]}
+      </label>`;
+    }).join("");
+    return `
+      <div class="maint-rule" data-idx="${i}">
+        <div class="maint-rule-title">${escapeHtml(tpl.title)}</div>
+        <div class="maint-days">${dayCbs}</div>
+        <div class="maint-times">
+          <input type="time" class="maint-start" data-idx="${i}" value="${w.start || tpl.defaultStart}">
+          <span>~</span>
+          <input type="time" class="maint-end" data-idx="${i}" value="${w.end || tpl.defaultEnd}">
+        </div>
       </div>
-      <div class="maint-times">
-        <input type="time" class="maint-start" data-idx="${i}" value="${w.start || '07:00'}">
-        <span>~</span>
-        <input type="time" class="maint-end" data-idx="${i}" value="${w.end || '07:30'}">
-        <button class="btn-mini danger maint-del" data-idx="${i}">✕</button>
-      </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     cb.addEventListener("change", () => {
@@ -1245,6 +1270,7 @@ function renderMaintEditRules() {
       const days = state.maintenanceWindows[i].days || [];
       if (cb.checked) {
         if (!days.includes(d)) days.push(d);
+        days.sort((a, b) => a - b);
       } else {
         state.maintenanceWindows[i].days = days.filter((x) => x !== d);
       }
@@ -1262,28 +1288,17 @@ function renderMaintEditRules() {
       state.maintenanceWindows[i].end = inp.value;
     });
   });
-  list.querySelectorAll('.maint-del').forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const i = parseInt(btn.dataset.idx);
-      state.maintenanceWindows.splice(i, 1);
-      renderMaintEditRules();
-    });
-  });
 }
 
-$("addMaintRuleBtn").addEventListener("click", () => {
-  state.maintenanceWindows.push({ days: [1, 2, 3, 4, 5], start: "07:00", end: "07:30" });
-  renderMaintEditRules();
-});
-
 async function saveMaintenanceToBackend() {
-  for (const w of state.maintenanceWindows) {
+  for (let i = 0; i < state.maintenanceWindows.length; i++) {
+    const w = state.maintenanceWindows[i];
     if (!w.days || !w.days.length) {
-      showModal("校验失败", "每条维护规则至少需要勾选一天。");
+      showModal("校验失败", `第 ${i + 1} 条规则至少需要勾选一天。`);
       return false;
     }
     if (!w.start || !w.end) {
-      showModal("校验失败", "维护规则必须填写开始和结束时间。");
+      showModal("校验失败", `第 ${i + 1} 条规则必须填写开始和结束时间。`);
       return false;
     }
     if (w.start >= w.end) {
@@ -1299,11 +1314,8 @@ async function saveMaintenanceToBackend() {
     });
     const data = await r.json();
     if (data.ok && data.config) {
-      state.maintenanceWindows = (data.config.maintenance_windows || []).map((w) => ({
-        days: (w.days || []).slice(),
-        start: w.start || "07:00",
-        end: w.end || "07:30",
-      }));
+      // 后端返回后再次规范化，确保仍然是固定 2 条
+      state.maintenanceWindows = normalizeMaintenance(data.config.maintenance_windows);
     }
     return true;
   } catch (e) { console.warn(e); return false; }
