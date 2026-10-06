@@ -94,13 +94,13 @@
 
   .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
+  /* 侧边栏 —— 用 flex 自然占位（含移动端） */
   .sidebar {
     width: 320px; background: var(--bg-card);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     transition: width 0.25s ease;
     flex-shrink: 0; overflow: hidden;
-    position: relative;
   }
   .sidebar.collapsed { width: 44px; }
   .sidebar-header {
@@ -273,9 +273,56 @@
 
   .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
+  /* ============ 维护时段编辑器 ============ */
+  .maint-rule {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 6px;
+    background: var(--bg-input);
+  }
+  .maint-days {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .maint-days label {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--text-dim); cursor: pointer;
+    padding: 2px 6px; border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .maint-days label:hover { background: var(--bg-card-hover); }
+  .maint-days input[type="checkbox"] {
+    width: 14px; height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    margin: 0;
+  }
+  .maint-times {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .maint-times input[type="time"] {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: "Consolas", "Monaco", monospace;
+    -webkit-appearance: none;
+    outline: none;
+  }
+  .maint-times input[type="time"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
+  }
+  .maint-times span { color: var(--text-mute); font-size: 11px; }
+
   .content {
     flex: 1; display: flex; flex-direction: column;
     overflow: hidden; padding: 14px; gap: 12px;
+    min-width: 0;
   }
   .toolbar { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .toolbar input {
@@ -391,13 +438,6 @@
     color: var(--text-dim); line-height: 1.6;
     font-size: 13px; margin-bottom: 14px; white-space: pre-wrap;
   }
-  .modal input {
-    width: 100%; background: var(--bg-input); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 10px; color: var(--text);
-    font-size: 13px; font-family: inherit; outline: none;
-    margin-bottom: 10px; -webkit-appearance: none;
-  }
-  .modal input:focus { border-color: var(--accent); }
   .modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
   .modal button {
     padding: 8px 18px; border: none; border-radius: 8px;
@@ -439,6 +479,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ========= iOS 移动端适配（需求 1：改为弹性布局） ========= */
   @media (max-width: 900px) {
     .topbar { padding: 0 8px; gap: 6px; height: 52px; }
     .topbar-notice { display: none; }
@@ -446,20 +487,18 @@
     .logo span:last-child { display: none; }
     .main { height: calc(100vh - 52px); }
 
+    /* 关键：不再使用 position:absolute，侧边栏参与 flex 布局 */
     .sidebar {
-      position: absolute; top: 52px; left: 0;
-      height: calc(100vh - 52px); z-index: 50;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.5);
-      max-width: 85vw;
+      width: 260px;
+      max-width: 70vw;
     }
-    .sidebar:not(.collapsed) { width: 280px; }
     .sidebar.collapsed {
       width: 44px !important;
-      border-right: 1px solid var(--border);
-      overflow: visible;
+      max-width: 44px;
     }
     .sidebar.collapsed .sidebar-header {
-      padding: 14px 4px; justify-content: center;
+      padding: 14px 4px;
+      justify-content: center;
     }
     .sidebar.collapsed .sidebar-header span { display: none; }
     .sidebar.collapsed .collapse-btn {
@@ -520,10 +559,10 @@
           <button class="btn-mini" id="serverEditToggle">编辑</button>
         </div>
         <div id="serverViewList" class="check-list"></div>
-        <textarea id="serverEditTextarea" style="display:none;min-height:100px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110&#10;18区*49.234.85.110"></textarea>
+        <textarea id="serverEditTextarea" style="display:none;min-height:110px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110 6732&#10;17区*49.235.42.168*6732"></textarea>
       </div>
 
-      <!-- Bark 密钥列表 -->
+      <!-- Bark 密钥 -->
       <div class="field">
         <div class="field-header">
           <label>Bark 密钥 <span class="badge" id="barkModeBadge">视图模式</span></label>
@@ -533,19 +572,17 @@
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
-      <!-- 维护时段 -->
+      <!-- 维护时段（可视化） -->
       <div class="field">
         <div class="field-header">
           <label>Bark 免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
           <button class="btn-mini" id="maintEditToggle">编辑</button>
         </div>
-        <div id="maintViewList" class="check-list" style="max-height:120px;"></div>
-        <textarea id="maintEditTextarea" style="display:none;min-height:80px;" placeholder="每行一条，例如：&#10;周一~周五 07:00-07:30&#10;周六~周日 09:30-10:00"></textarea>
-      </div>
-
-      <div class="field">
-        <label>端口</label>
-        <input type="number" id="portInput" value="6732">
+        <div id="maintViewList" class="check-list" style="max-height:150px;"></div>
+        <div id="maintEditView" style="display:none;">
+          <div id="maintRulesList"></div>
+          <button class="btn-mini" id="addMaintRuleBtn" style="width:100%;margin-top:6px;">＋ 新增规则</button>
+        </div>
       </div>
 
       <div class="field">
@@ -629,17 +666,28 @@
 
 <!-- README 弹窗 -->
 <div class="modal-mask" id="readmeMask">
-  <div class="modal" style="max-width:560px;">
+  <div class="modal" style="max-width:580px;">
     <h3 class="accent">📖 使用说明</h3>
 
     <div class="readme-section">
       <h4>⚙️ 快速开始</h4>
       <ul>
-        <li>点「服务器列表」旁的「编辑」→ 粘贴服务器（支持 <code>名称 IP</code> 或 <code>名称*IP</code>）→ 点「完成」</li>
+        <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
         <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
-        <li>如需维护时段屏蔽，点「维护时段」旁的「编辑」填入时间规则</li>
-        <li>调整端口 / 检测间隔 / 告警阈值 / 时区</li>
+        <li>维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
+        <li>调整检测间隔 / 告警阈值 / 时区</li>
         <li>点「▶ 启动监控」开始探测</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🏗 系统架构</h4>
+      <ul>
+        <li><b>GitHub 仓库</b>：存放所有代码（app.py + index.html）</li>
+        <li><b>Render（后端）</b>：从 GitHub 拉取代码，运行 Python Flask 服务，负责探针检测、Bark 报警、状态存储</li>
+        <li><b>Cloudflare Pages（前端）</b>：从 GitHub 拉取 index.html，全球 CDN 托管，访问速度很快</li>
+        <li><b>UptimeRobot</b>：每 5 分钟访问一次 Render，防止免费实例 15 分钟休眠</li>
+        <li><b>数据流</b>：前端每 2 秒轮询后端 API，所有状态保存在后端，多设备自动同步</li>
       </ul>
     </div>
 
@@ -671,9 +719,9 @@
     <div class="readme-section">
       <h4>🔧 Bark 免告警维护时段</h4>
       <ul>
-        <li>格式：<code>周一~周五 07:00-07:30</code>，每行一条，可写多条</li>
+        <li>可视化勾选星期 + 时分选择器，无需手写格式</li>
         <li>维护时段内：日志照常记录，但不会触发 Bark 推送</li>
-        <li>维护时段外：告警逻辑不变</li>
+        <li>默认预填：工作日 07:00-07:30、周末 09:30-10:00</li>
       </ul>
     </div>
 
@@ -714,7 +762,7 @@
 
 <script>
 /* ================================================================
- *  前端逻辑 · 后端地址硬编码，所有运行时状态从后端拉取
+ *  前端逻辑
  * ================================================================ */
 const BACKEND_URL = "https://jinyong-monitor.onrender.com";
 
@@ -742,6 +790,7 @@ const POLL_STATUS = 2000;
 const POLL_LOGS = 3000;
 const POLL_CONFIG = 5000;
 const MAX_RTT_HISTORY = 30;
+const DEFAULT_PORT = 6732;
 
 const $ = (id) => document.getElementById(id);
 const clockEl = $("clock");
@@ -829,19 +878,22 @@ $("modalClose").addEventListener("click", () => $("modalMask").classList.remove(
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
 
-// ---------- 服务器列表解析（支持 名称 IP / 名称*IP） ----------
+// ---------- 服务器文本解析（支持 名称 IP 端口 / 名称*IP*端口） ----------
 function parseServersText(text) {
   const servers = [];
   text.split(/\r?\n/).forEach((line) => {
     line = line.trim();
     if (!line || line.startsWith("#")) return;
-    const m = line.match(/(\d{1,3}(?:\.\d{1,3}){3})/);
-    if (!m) return;
-    const ip = m[1];
-    // 取 IP 之前的部分作为名称，去掉 * , 制表符
-    let name = line.slice(0, m.index).replace(/[*,\t]+/g, " ").trim();
+    const ipM = line.match(/(\d{1,3}(?:\.\d{1,3}){3})/);
+    if (!ipM) return;
+    const ip = ipM[1];
+    const beforeIp = line.slice(0, ipM.index);
+    const afterIp = line.slice(ipM.index + ip.length);
+    let name = beforeIp.replace(/[*,\t\s]+/g, " ").trim();
     if (!name) name = ip;
-    servers.push({ name, ip, enabled: true });
+    const portM = afterIp.match(/(\d+)/);
+    const port = portM ? parseInt(portM[1]) : DEFAULT_PORT;
+    servers.push({ name, ip, port, enabled: true });
   });
   return servers;
 }
@@ -855,27 +907,28 @@ async function loadConfig(force = false) {
     const cfg = await r.json();
     state.config = cfg;
 
-    // 服务器列表：仅非编辑模式时刷新 UI
     if (!serverEditMode) {
-      const serverLines = (cfg.servers || []).map((s) => `${s.name} ${s.ip}`).join("\n");
+      const serverLines = (cfg.servers || [])
+        .map((s) => `${s.name} ${s.ip} ${s.port || DEFAULT_PORT}`).join("\n");
       $("serverEditTextarea").value = serverLines;
       renderServerList();
     }
 
-    $("portInput").value = cfg.port || 6732;
     $("intervalInput").value = cfg.interval || 20;
     $("alertStreakInput").value = cfg.alert_streak || 5;
     $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
 
-    // Bark 密钥
     state.barkKeys = (cfg.bark_keys || []).map((b) => ({
       key: b.key, enabled: b.enabled !== false
     }));
     renderBarkList();
 
-    // 维护时段
-    state.maintenanceWindows = (cfg.maintenance_windows || []).slice();
+    state.maintenanceWindows = (cfg.maintenance_windows || []).map((w) => ({
+      days: (w.days || []).slice(),
+      start: w.start || "07:00",
+      end: w.end || "07:30",
+    }));
     renderMaintenanceList();
 
     state.configLoaded = true;
@@ -888,7 +941,6 @@ async function loadConfig(force = false) {
 $("saveConfigBtn").addEventListener("click", async () => {
   if (!state.backendUrl) return;
   const cfg = {
-    port: parseInt($("portInput").value) || 6732,
     interval: parseFloat($("intervalInput").value) || 20,
     alert_streak: parseInt($("alertStreakInput").value) || 5,
     timezone_offset: parseInt($("timezoneSelect").value) || 0,
@@ -939,18 +991,11 @@ $("stopBtn").addEventListener("click", async () => {
 
 function updateRunningState(running) {
   state.running = running;
-  const startBtn = $("startBtn");
-  const stopBtn = $("stopBtn");
-  if (running) {
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-  } else {
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-  }
+  $("startBtn").disabled = running;
+  $("stopBtn").disabled = !running;
 }
 
-// ---------- 服务器列表 编辑/视图 ----------
+// ---------- 服务器列表 ----------
 function renderServerList() {
   const view = $("serverViewList");
   const ta = $("serverEditTextarea");
@@ -963,7 +1008,6 @@ function renderServerList() {
     toggle.textContent = "完成";
     toggle.classList.add("active");
     badge.textContent = "编辑模式";
-    badge.classList.remove("run");
     return;
   }
 
@@ -972,7 +1016,6 @@ function renderServerList() {
   toggle.textContent = "编辑";
   toggle.classList.remove("active");
   badge.textContent = "视图模式";
-  badge.classList.remove("run");
 
   const servers = (state.config && state.config.servers) || [];
   if (!servers.length) {
@@ -983,7 +1026,7 @@ function renderServerList() {
     <label class="check-item">
       <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
       <span class="s-name">${escapeHtml(s.name)}</span>
-      <span class="s-ip">${escapeHtml(s.ip)}</span>
+      <span class="s-ip">${escapeHtml(s.ip)}:${s.port || DEFAULT_PORT}</span>
     </label>
   `).join("");
 
@@ -1006,12 +1049,11 @@ function renderServerList() {
 
 $("serverEditToggle").addEventListener("click", async () => {
   if (serverEditMode) {
-    // 完成编辑：解析 textarea，保存到后端
-    const text = $("serverEditTextarea").value;
-    const newServers = parseServersText(text);
-    // 保留原有的勾选状态（按 name+ip 匹配）
+    const newServers = parseServersText($("serverEditTextarea").value);
     const oldMap = {};
-    (state.config.servers || []).forEach((s) => { oldMap[s.name + "|" + s.ip] = s.enabled !== false; });
+    (state.config.servers || []).forEach((s) => {
+      oldMap[s.name + "|" + s.ip] = s.enabled !== false;
+    });
     newServers.forEach((s) => {
       const k = s.name + "|" + s.ip;
       if (oldMap[k] !== undefined) s.enabled = oldMap[k];
@@ -1040,7 +1082,7 @@ $("serverEditToggle").addEventListener("click", async () => {
   }
 });
 
-// ---------- Bark 密钥 编辑/视图 ----------
+// ---------- Bark 密钥 ----------
 function renderBarkList() {
   const list = $("barkViewList");
   const ta = $("barkEditTextarea");
@@ -1104,8 +1146,7 @@ async function saveBarkKeysToBackend() {
 
 $("barkEditToggle").addEventListener("click", async () => {
   if (barkEditMode) {
-    const text = $("barkEditTextarea").value;
-    const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const lines = $("barkEditTextarea").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     const oldMap = {};
     state.barkKeys.forEach((b) => { oldMap[b.key] = b.enabled; });
     state.barkKeys = lines.map((k) => ({
@@ -1120,23 +1161,44 @@ $("barkEditToggle").addEventListener("click", async () => {
   renderBarkList();
 });
 
-// ---------- 维护时段 编辑/视图 ----------
+// ---------- 维护时段（可视化） ----------
+const WEEKDAY_NAMES = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
+
+function formatDays(days) {
+  if (!days || !days.length) return "";
+  const sorted = days.slice().sort((a, b) => a - b);
+  const names = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const ranges = [];
+  let start = sorted[0], prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    if (i < sorted.length && sorted[i] === prev + 1) {
+      prev = sorted[i];
+    } else {
+      if (start === prev) ranges.push(names[start]);
+      else if (prev === start + 1) ranges.push(names[start] + "、" + names[prev]);
+      else ranges.push(names[start] + "~" + names[prev]);
+      if (i < sorted.length) { start = sorted[i]; prev = sorted[i]; }
+    }
+  }
+  return ranges.join("、");
+}
+
 function renderMaintenanceList() {
   const view = $("maintViewList");
-  const ta = $("maintEditTextarea");
+  const editView = $("maintEditView");
   const toggle = $("maintEditToggle");
   const badge = $("maintModeBadge");
 
   if (maintEditMode) {
     view.style.display = "none";
-    ta.style.display = "block";
-    ta.value = state.maintenanceWindows.join("\n");
+    editView.style.display = "block";
     toggle.textContent = "完成";
     toggle.classList.add("active");
     badge.textContent = "编辑模式";
+    renderMaintEditRules();
   } else {
     view.style.display = "block";
-    ta.style.display = "none";
+    editView.style.display = "none";
     toggle.textContent = "编辑";
     toggle.classList.remove("active");
     badge.textContent = "视图模式";
@@ -1147,14 +1209,88 @@ function renderMaintenanceList() {
     }
     view.innerHTML = state.maintenanceWindows.map((w) => `
       <div class="check-item" style="cursor:default;">
-        <span class="s-maint">🔧 ${escapeHtml(w)}</span>
+        <span class="s-maint">🔧 ${escapeHtml(formatDays(w.days))} ${escapeHtml(w.start)}~${escapeHtml(w.end)}</span>
       </div>
     `).join("");
   }
 }
 
+function renderMaintEditRules() {
+  const list = $("maintRulesList");
+  if (!state.maintenanceWindows.length) {
+    list.innerHTML = '<div class="check-empty" style="padding:10px;">暂无规则，点击下方“新增规则”</div>';
+    return;
+  }
+  list.innerHTML = state.maintenanceWindows.map((w, i) => `
+    <div class="maint-rule" data-idx="${i}">
+      <div class="maint-days">
+        ${[1,2,3,4,5,6,7].map((d) => {
+          const checked = (w.days || []).includes(d) ? "checked" : "";
+          return `<label><input type="checkbox" data-idx="${i}" data-day="${d}" ${checked}>${WEEKDAY_NAMES[d]}</label>`;
+        }).join("")}
+      </div>
+      <div class="maint-times">
+        <input type="time" class="maint-start" data-idx="${i}" value="${w.start || '07:00'}">
+        <span>~</span>
+        <input type="time" class="maint-end" data-idx="${i}" value="${w.end || '07:30'}">
+        <button class="btn-mini danger maint-del" data-idx="${i}">✕</button>
+      </div>
+    </div>
+  `).join("");
+
+  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const i = parseInt(cb.dataset.idx);
+      const d = parseInt(cb.dataset.day);
+      const days = state.maintenanceWindows[i].days || [];
+      if (cb.checked) {
+        if (!days.includes(d)) days.push(d);
+      } else {
+        state.maintenanceWindows[i].days = days.filter((x) => x !== d);
+      }
+    });
+  });
+  list.querySelectorAll('.maint-start').forEach((inp) => {
+    inp.addEventListener("change", () => {
+      const i = parseInt(inp.dataset.idx);
+      state.maintenanceWindows[i].start = inp.value;
+    });
+  });
+  list.querySelectorAll('.maint-end').forEach((inp) => {
+    inp.addEventListener("change", () => {
+      const i = parseInt(inp.dataset.idx);
+      state.maintenanceWindows[i].end = inp.value;
+    });
+  });
+  list.querySelectorAll('.maint-del').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = parseInt(btn.dataset.idx);
+      state.maintenanceWindows.splice(i, 1);
+      renderMaintEditRules();
+    });
+  });
+}
+
+$("addMaintRuleBtn").addEventListener("click", () => {
+  state.maintenanceWindows.push({ days: [1, 2, 3, 4, 5], start: "07:00", end: "07:30" });
+  renderMaintEditRules();
+});
+
 async function saveMaintenanceToBackend() {
-  if (!state.backendUrl) return;
+  for (const w of state.maintenanceWindows) {
+    if (!w.days || !w.days.length) {
+      showModal("校验失败", "每条维护规则至少需要勾选一天。");
+      return false;
+    }
+    if (!w.start || !w.end) {
+      showModal("校验失败", "维护规则必须填写开始和结束时间。");
+      return false;
+    }
+    if (w.start >= w.end) {
+      showModal("校验失败", `结束时间必须晚于开始时间：${w.start} ~ ${w.end}`);
+      return false;
+    }
+  }
   try {
     const r = await fetch(apiUrl("/api/config"), {
       method: "POST",
@@ -1163,16 +1299,20 @@ async function saveMaintenanceToBackend() {
     });
     const data = await r.json();
     if (data.ok && data.config) {
-      state.maintenanceWindows = (data.config.maintenance_windows || []).slice();
+      state.maintenanceWindows = (data.config.maintenance_windows || []).map((w) => ({
+        days: (w.days || []).slice(),
+        start: w.start || "07:00",
+        end: w.end || "07:30",
+      }));
     }
-  } catch (e) { console.warn(e); }
+    return true;
+  } catch (e) { console.warn(e); return false; }
 }
 
 $("maintEditToggle").addEventListener("click", async () => {
   if (maintEditMode) {
-    const text = $("maintEditTextarea").value;
-    state.maintenanceWindows = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-    await saveMaintenanceToBackend();
+    const ok = await saveMaintenanceToBackend();
+    if (!ok) return;
     maintEditMode = false;
   } else {
     maintEditMode = true;
@@ -1238,7 +1378,6 @@ async function fetchStatus() {
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
 
-    // Bark 抑制状态
     state.barkSuppressed = !!data.bark_suppressed;
     maintBadge.classList.toggle("show", state.barkSuppressed);
 
@@ -1257,7 +1396,6 @@ async function fetchStatus() {
       runText.textContent = "未运行";
     }
 
-    // 侧边栏折叠状态同步
     if (typeof data.sidebar_collapsed === "boolean") {
       const current = sidebarEl.classList.contains("collapsed");
       if (current !== data.sidebar_collapsed) {
@@ -1265,7 +1403,6 @@ async function fetchStatus() {
       }
     }
 
-    // Bark 列表同步
     if (!barkEditMode && Array.isArray(data.bark_keys)) {
       const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false }));
       if (JSON.stringify(newKeys) !== JSON.stringify(state.barkKeys)) {
@@ -1274,14 +1411,13 @@ async function fetchStatus() {
       }
     }
 
-    // 服务器列表同步（非编辑模式）
     if (!serverEditMode && Array.isArray(data.servers_config)) {
       if (!state.config) state.config = {};
       const newServers = data.servers_config.map((s) => ({
-        name: s.name, ip: s.ip, enabled: s.enabled !== false
+        name: s.name, ip: s.ip, port: s.port || DEFAULT_PORT, enabled: s.enabled !== false
       }));
       const localServers = (state.config.servers || []).map((s) => ({
-        name: s.name, ip: s.ip, enabled: s.enabled !== false
+        name: s.name, ip: s.ip, port: s.port || DEFAULT_PORT, enabled: s.enabled !== false
       }));
       if (JSON.stringify(newServers) !== JSON.stringify(localServers)) {
         state.config.servers = data.servers_config;
@@ -1353,7 +1489,7 @@ function renderTable() {
         <td><div class="status-cell ${statusClass}"><span class="status-dot ${statusClass}"></span>${statusText}</div></td>
         <td>${escapeHtml(r.name)}</td>
         <td class="mono">${r.ip}</td>
-        <td class="mono">${r.port}</td>
+        <td class="mono">${r.port || DEFAULT_PORT}</td>
         <td class="mono">${rtt}</td>
         <td class="mono">${totalMs}</td>
         <td><span class="streak-badge ${streakClass}">${r.streak}</span></td>
@@ -1452,7 +1588,6 @@ function renderLogs() {
 
 // ---------- 初始化 ----------
 function init() {
-  // 后端地址已硬编码，直接拉取全部数据
   loadConfig(true);
   fetchStatus();
   fetchLogs();
