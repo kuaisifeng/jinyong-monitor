@@ -21,7 +21,6 @@
     --warning: #ffb74d;
     --radius: 12px;
     --shadow: 0 4px 20px rgba(0,0,0,0.35);
-    /* 复选框配色 */
     --cb-border: #6b7794;
     --cb-border-hover: #97a8cc;
     --cb-bg: #1a2138;
@@ -31,15 +30,11 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
+    height: 100%; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    font-size: 14px;
-    overflow: hidden;
+    font-size: 14px; overflow: hidden;
   }
 
-  /* ========= 顶栏 ========= */
   .topbar {
     display: flex; align-items: center; height: 56px; padding: 0 14px;
     background: linear-gradient(180deg, #131826 0%, #0f1422 100%);
@@ -72,10 +67,18 @@
   .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
   .clock {
     font-family: "Consolas", "Monaco", monospace;
-    font-size: 12px; color: var(--text-dim);
-    white-space: nowrap;
+    font-size: 12px; color: var(--text-dim); white-space: nowrap;
   }
   .clock b { color: var(--accent); font-weight: 500; font-size: 10px; margin-left: 4px; }
+  .maint-badge {
+    display: none;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,183,77,0.15);
+    border: 1px solid rgba(255,183,77,0.4);
+    color: var(--warning); font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .maint-badge.show { display: inline-block; }
   .run-indicator {
     display: flex; align-items: center; gap: 6px; padding: 4px 10px;
     border-radius: 999px; background: rgba(136,146,168,0.1);
@@ -91,7 +94,6 @@
 
   .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
-  /* ========= 侧边栏 ========= */
   .sidebar {
     width: 320px; background: var(--bg-card);
     border-right: 1px solid var(--border);
@@ -118,8 +120,7 @@
     transition: all 0.2s;
     -webkit-appearance: none;
     touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
+    user-select: none; -webkit-user-select: none;
     min-width: 36px; min-height: 36px;
     display: flex; align-items: center; justify-content: center;
   }
@@ -156,9 +157,7 @@
     font-family: "Consolas", "Monaco", monospace;
     font-size: 12px; line-height: 1.5;
   }
-  .field input:disabled, .field textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ========= 复选列表（需求 2 重做） ========= */
   .check-list {
     max-height: 220px; overflow-y: auto;
     border: 1px solid var(--border); border-radius: 8px;
@@ -176,15 +175,11 @@
     border-color: var(--cb-border-hover) !important;
     background: var(--cb-bg-hover) !important;
   }
-
-  /* 自定义复选框 —— 高对比度 */
   .check-item input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    min-height: 18px;
+    width: 18px; height: 18px;
+    min-width: 18px; min-height: 18px;
     border: 2px solid var(--cb-border);
     border-radius: 5px;
     background: var(--cb-bg);
@@ -192,9 +187,7 @@
     flex-shrink: 0;
     position: relative;
     transition: all 0.15s ease;
-    margin: 0;
-    padding: 0;
-    outline: none;
+    margin: 0; padding: 0; outline: none;
   }
   .check-item input[type="checkbox"]:hover {
     border-color: var(--cb-border-hover);
@@ -209,22 +202,17 @@
     box-shadow: 0 0 10px var(--cb-checked-glow);
   }
   .check-item input[type="checkbox"]:checked:hover {
-    background: #6cafff;
-    border-color: #6cafff;
+    background: #6cafff; border-color: #6cafff;
   }
-  /* 白色对勾 */
   .check-item input[type="checkbox"]:checked::after {
     content: "";
     position: absolute;
-    left: 4px;
-    top: 0px;
-    width: 5px;
-    height: 10px;
+    left: 4px; top: 0px;
+    width: 5px; height: 10px;
     border: solid #ffffff;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
-
   .check-item .s-name {
     color: var(--text); font-weight: 500; flex-shrink: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -241,13 +229,17 @@
     font-size: 11px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .check-item .s-maint {
+    color: var(--text);
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
+  }
   .check-empty {
     color: var(--text-mute); text-align: center;
     padding: 16px; font-size: 12px;
   }
-  .list-actions { display: flex; gap: 6px; margin-top: 6px; }
   .btn-mini {
-    flex: 1; padding: 6px 8px;
+    padding: 6px 8px;
     border: 1px solid var(--border); background: transparent;
     color: var(--text-dim); font-size: 11px; border-radius: 6px;
     cursor: pointer; transition: all 0.2s;
@@ -447,7 +439,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ========= iOS 移动端适配 ========= */
   @media (max-width: 900px) {
     .topbar { padding: 0 8px; gap: 6px; height: 52px; }
     .topbar-notice { display: none; }
@@ -468,8 +459,7 @@
       overflow: visible;
     }
     .sidebar.collapsed .sidebar-header {
-      padding: 14px 4px;
-      justify-content: center;
+      padding: 14px 4px; justify-content: center;
     }
     .sidebar.collapsed .sidebar-header span { display: none; }
     .sidebar.collapsed .collapse-btn {
@@ -483,25 +473,19 @@
     .table-wrapper { max-height: 40%; }
     .toolbar input { max-width: none; }
 
-    /* 移动端复选框稍大，触控友好 */
     .check-item input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      min-width: 20px;
-      min-height: 20px;
+      width: 20px; height: 20px;
+      min-width: 20px; min-height: 20px;
     }
     .check-item input[type="checkbox"]:checked::after {
-      left: 5px;
-      top: 1px;
-      width: 5px;
-      height: 10px;
+      left: 5px; top: 1px;
+      width: 5px; height: 10px;
     }
   }
 </style>
 </head>
 <body>
 
-<!-- 顶栏 -->
 <div class="topbar">
   <div class="logo">
     <div class="logo-icon">⚔</div>
@@ -511,6 +495,7 @@
     ⚡ 后端统一管理状态 · 多设备实时同步 · 网页只做展示
   </div>
   <div class="topbar-right">
+    <span class="maint-badge" id="maintBadge">🔧 维护时段·Bark 已静默</span>
     <button class="icon-btn" id="readmeBtn" title="使用说明">?</button>
     <div class="clock" id="clock">--:--:--</div>
     <div class="run-indicator stopped" id="runIndicator">
@@ -521,7 +506,6 @@
 </div>
 
 <div class="main">
-  <!-- 侧边栏 -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>配置</span>
@@ -529,39 +513,34 @@
     </div>
     <div class="sidebar-content">
 
-      <div class="field">
-        <label>后端地址</label>
-        <input type="text" id="backendUrl" placeholder="https://xxx.onrender.com">
-        <button class="btn" id="saveBackendBtn" style="margin-top:6px;">保存后端地址</button>
-      </div>
-
-      <div class="divider"></div>
-
       <!-- 服务器列表 -->
       <div class="field">
         <div class="field-header">
-          <label>服务器列表 <span class="badge" id="serverListMode">编辑模式</span></label>
+          <label>服务器列表 <span class="badge" id="serverListMode">视图模式</span></label>
+          <button class="btn-mini" id="serverEditToggle">编辑</button>
         </div>
-        <div id="serverEditView">
-          <textarea id="serversText" placeholder="18区 49.234.85.110&#10;17区 49.235.42.168"></textarea>
-        </div>
-        <div id="serverRunView" style="display:none;">
-          <div class="check-list" id="serverCheckList"></div>
-          <div class="list-actions">
-            <button class="btn-mini" id="addServerBtn">＋ 新增</button>
-            <button class="btn-mini danger" id="clearServersBtn">🗑 清空</button>
-          </div>
-        </div>
+        <div id="serverViewList" class="check-list"></div>
+        <textarea id="serverEditTextarea" style="display:none;min-height:100px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110&#10;18区*49.234.85.110"></textarea>
       </div>
 
       <!-- Bark 密钥列表 -->
       <div class="field">
         <div class="field-header">
           <label>Bark 密钥 <span class="badge" id="barkModeBadge">视图模式</span></label>
-          <button class="btn-mini" id="barkEditToggle" style="max-width:80px;flex:none;">编辑</button>
+          <button class="btn-mini" id="barkEditToggle">编辑</button>
         </div>
         <div id="barkViewList" class="check-list" style="max-height:140px;"></div>
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
+      </div>
+
+      <!-- 维护时段 -->
+      <div class="field">
+        <div class="field-header">
+          <label>Bark 免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
+          <button class="btn-mini" id="maintEditToggle">编辑</button>
+        </div>
+        <div id="maintViewList" class="check-list" style="max-height:120px;"></div>
+        <textarea id="maintEditTextarea" style="display:none;min-height:80px;" placeholder="每行一条，例如：&#10;周一~周五 07:00-07:30&#10;周六~周日 09:30-10:00"></textarea>
       </div>
 
       <div class="field">
@@ -590,7 +569,7 @@
         </select>
       </div>
 
-      <button class="btn primary" id="saveConfigBtn">💾 保存配置到后端</button>
+      <button class="btn primary" id="saveConfigBtn">💾 保存运行参数</button>
       <button class="btn success" id="startBtn">▶ 启动监控</button>
       <button class="btn danger" id="stopBtn" disabled>■ 停止监控</button>
 
@@ -602,7 +581,6 @@
     </div>
   </aside>
 
-  <!-- 内容区 -->
   <section class="content">
     <div class="toolbar">
       <input type="text" id="filterInput" placeholder="🔍 筛选服务器名称或 IP...">
@@ -639,7 +617,6 @@
   </section>
 </div>
 
-<!-- 通用弹窗 -->
 <div class="modal-mask" id="modalMask">
   <div class="modal">
     <h3 id="modalTitle">提示</h3>
@@ -650,42 +627,28 @@
   </div>
 </div>
 
-<!-- 新增服务器弹窗 -->
-<div class="modal-mask" id="addServerMask">
-  <div class="modal">
-    <h3 class="accent">新增服务器</h3>
-    <p style="margin-bottom:10px;">输入名称和 IP，确认后会自动加入监控列表并默认勾选。</p>
-    <input type="text" id="newServerName" placeholder="名称，例如：18区">
-    <input type="text" id="newServerIp" placeholder="IP，例如：49.234.85.110">
-    <div class="actions">
-      <button class="ghost" id="addServerCancel">取消</button>
-      <button id="addServerConfirm">确认添加</button>
-    </div>
-  </div>
-</div>
-
 <!-- README 弹窗 -->
 <div class="modal-mask" id="readmeMask">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <h3 class="accent">📖 使用说明</h3>
 
     <div class="readme-section">
       <h4>⚙️ 快速开始</h4>
       <ul>
-        <li>在左侧「后端地址」里填入你的 Render 地址</li>
-        <li>点击「保存后端地址」，会自动拉取后端全局配置</li>
-        <li>编辑「服务器列表」，每行格式：<code>名称 IP</code></li>
+        <li>点「服务器列表」旁的「编辑」→ 粘贴服务器（支持 <code>名称 IP</code> 或 <code>名称*IP</code>）→ 点「完成」</li>
         <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
-        <li>点击「保存配置到后端」→「▶ 启动监控」</li>
+        <li>如需维护时段屏蔽，点「维护时段」旁的「编辑」填入时间规则</li>
+        <li>调整端口 / 检测间隔 / 告警阈值 / 时区</li>
+        <li>点「▶ 启动监控」开始探测</li>
       </ul>
     </div>
 
     <div class="readme-section">
       <h4>🔄 多设备同步</h4>
       <ul>
-        <li>所有状态（服务器列表、勾选、侧边栏折叠、Bark 密钥）都保存在后端</li>
+        <li>后端地址已写死在页面，无需手动填写</li>
+        <li>所有状态（服务器、勾选、侧边栏折叠、Bark 密钥、维护时段）都保存在后端</li>
         <li>任意设备操作后，其他设备 2 秒内自动同步</li>
-        <li>只有「后端地址」是本设备本地保存的</li>
       </ul>
     </div>
 
@@ -702,6 +665,34 @@
         <li>连续超时达到阈值（默认 5 次）自动推送到所有勾选的密钥</li>
         <li>报警内容含服务器名、IP、首次超时时间</li>
         <li>critical 级别 + alarm 铃声 + 满音量，绕过静音模式</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔧 Bark 免告警维护时段</h4>
+      <ul>
+        <li>格式：<code>周一~周五 07:00-07:30</code>，每行一条，可写多条</li>
+        <li>维护时段内：日志照常记录，但不会触发 Bark 推送</li>
+        <li>维护时段外：告警逻辑不变</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>📋 日志说明</h4>
+      <ul>
+        <li>实时检测日志：最多保留 <b>100 条</b></li>
+        <li>超时告警日志：最多保留 <b>1000 条</b></li>
+        <li>超出上限后，从最早的一条开始删除，逐条淘汰，不会一次性清空</li>
+        <li>日志按时间从老到新排列，新日志显示在下方</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🧪 测试服说明</h4>
+      <ul>
+        <li>「老区测试服（192.168.1.11）」和「新区测试服（192.168.1.22）」都是<b>内网地址</b></li>
+        <li>云端 Render 服务器无法访问内网 IP，因此这两台会一直显示超时，属于正常现象</li>
+        <li>如需监控内网测试服，请将后端部署到同一内网环境</li>
       </ul>
     </div>
 
@@ -723,10 +714,12 @@
 
 <script>
 /* ================================================================
- *  前端逻辑 · 所有运行时状态从后端拉取，本地只保存后端地址
+ *  前端逻辑 · 后端地址硬编码，所有运行时状态从后端拉取
  * ================================================================ */
+const BACKEND_URL = "https://jinyong-monitor.onrender.com";
+
 const state = {
-  backendUrl: localStorage.getItem("backendUrl") || "",
+  backendUrl: BACKEND_URL,
   running: false,
   results: [],
   config: null,
@@ -741,12 +734,13 @@ const state = {
   timezoneOffset: 8,
   sidebarCollapsed: false,
   barkKeys: [],
-  serversTextDirty: false,   // 用户是否手动改过服务器列表
+  maintenanceWindows: [],
+  barkSuppressed: false,
 };
 
 const POLL_STATUS = 2000;
 const POLL_LOGS = 3000;
-const POLL_CONFIG = 5000;   // 每 5 秒强制同步一次完整配置
+const POLL_CONFIG = 5000;
 const MAX_RTT_HISTORY = 30;
 
 const $ = (id) => document.getElementById(id);
@@ -759,8 +753,11 @@ const statsText = $("statsText");
 const filterInput = $("filterInput");
 const loading = $("loading");
 const sidebarEl = $("sidebar");
+const maintBadge = $("maintBadge");
 
 let barkEditMode = false;
+let serverEditMode = false;
+let maintEditMode = false;
 
 function showLoading(show) { loading.classList.toggle("show", show); }
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -781,12 +778,11 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// ---------- 时钟 ----------
 setInterval(() => {
   clockEl.innerHTML = nowStr(state.timezoneOffset) + `<b>UTC${state.timezoneOffset >= 0 ? "+" : ""}${state.timezoneOffset}</b>`;
 }, 1000);
 
-// ---------- 侧边栏折叠（多设备同步） ----------
+// ---------- 侧边栏折叠 ----------
 function setSidebarCollapsed(collapsed, syncToBackend) {
   state.sidebarCollapsed = collapsed;
   if (collapsed) {
@@ -806,19 +802,16 @@ function setSidebarCollapsed(collapsed, syncToBackend) {
 }
 
 $("collapseBtn").addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   const next = !sidebarEl.classList.contains("collapsed");
   setSidebarCollapsed(next, true);
 });
 $("collapseBtn").addEventListener("touchend", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   const next = !sidebarEl.classList.contains("collapsed");
   setSidebarCollapsed(next, true);
 });
 
-// ---------- 通用弹窗 ----------
 function showModal(title, body, onClose) {
   $("modalTitle").textContent = title;
   $("modalBody").textContent = body;
@@ -833,31 +826,10 @@ function showModal(title, body, onClose) {
 }
 $("modalClose").addEventListener("click", () => $("modalMask").classList.remove("show"));
 
-// ---------- README ----------
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
 
-// ---------- 后端地址保存（需求 3 修复核心） ----------
-$("saveBackendBtn").addEventListener("click", async () => {
-  let url = $("backendUrl").value.trim();
-  if (!url) { showModal("提示", "后端地址不能为空"); return; }
-  if (!/^https?:\/\//.test(url)) url = "https://" + url;
-  state.backendUrl = url.replace(/\/+$/, "");
-  localStorage.setItem("backendUrl", state.backendUrl);
-  $("backendUrl").value = state.backendUrl;
-  state.configLoaded = false;
-  state.serversTextDirty = false;
-  showLoading(true);
-  try {
-    // 一次性拉取全部：完整 config + 运行状态 + 日志
-    await loadConfig(true);
-    await fetchStatus();
-    await fetchLogs();
-  } finally { showLoading(false); }
-  showModal("已保存", "后端地址已保存，已从后端拉取完整配置。\n" + state.backendUrl);
-});
-
-// ---------- 解析服务器文本 ----------
+// ---------- 服务器列表解析（支持 名称 IP / 名称*IP） ----------
 function parseServersText(text) {
   const servers = [];
   text.split(/\r?\n/).forEach((line) => {
@@ -866,6 +838,7 @@ function parseServersText(text) {
     const m = line.match(/(\d{1,3}(?:\.\d{1,3}){3})/);
     if (!m) return;
     const ip = m[1];
+    // 取 IP 之前的部分作为名称，去掉 * , 制表符
     let name = line.slice(0, m.index).replace(/[*,\t]+/g, " ").trim();
     if (!name) name = ip;
     servers.push({ name, ip, enabled: true });
@@ -873,20 +846,20 @@ function parseServersText(text) {
   return servers;
 }
 
-// ---------- 加载完整配置（支持 force） ----------
+// ---------- 加载完整配置 ----------
 async function loadConfig(force = false) {
   if (!state.backendUrl) return;
   if (state.configLoaded && !force) return;
   try {
     const r = await fetch(apiUrl("/api/config"));
     const cfg = await r.json();
-
     state.config = cfg;
 
-    // 编辑态下，若用户没有手动改过 textarea，才覆盖
-    if (!state.running && !state.serversTextDirty) {
-      $("serversText").value = (cfg.servers || [])
-        .map((s) => `${s.name} ${s.ip}`).join("\n");
+    // 服务器列表：仅非编辑模式时刷新 UI
+    if (!serverEditMode) {
+      const serverLines = (cfg.servers || []).map((s) => `${s.name} ${s.ip}`).join("\n");
+      $("serverEditTextarea").value = serverLines;
+      renderServerList();
     }
 
     $("portInput").value = cfg.port || 6732;
@@ -895,53 +868,31 @@ async function loadConfig(force = false) {
     $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
 
+    // Bark 密钥
     state.barkKeys = (cfg.bark_keys || []).map((b) => ({
       key: b.key, enabled: b.enabled !== false
     }));
     renderBarkList();
 
+    // 维护时段
+    state.maintenanceWindows = (cfg.maintenance_windows || []).slice();
+    renderMaintenanceList();
+
     state.configLoaded = true;
-    renderServerList();
   } catch (e) {
     console.warn("加载配置失败：", e);
   }
 }
 
-// ---------- 保存配置 ----------
+// ---------- 保存运行参数 ----------
 $("saveConfigBtn").addEventListener("click", async () => {
-  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
-
-  const baseCfg = {
+  if (!state.backendUrl) return;
+  const cfg = {
     port: parseInt($("portInput").value) || 6732,
     interval: parseFloat($("intervalInput").value) || 20,
     alert_streak: parseInt($("alertStreakInput").value) || 5,
     timezone_offset: parseInt($("timezoneSelect").value) || 0,
   };
-
-  if (state.running) {
-    showLoading(true);
-    try {
-      const r = await fetch(apiUrl("/api/config"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(baseCfg),
-      });
-      const data = await r.json();
-      if (data.ok) {
-        state.config = data.config;
-        state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
-        showModal("保存成功", "运行参数已更新。");
-      } else {
-        showModal("保存失败", data.msg || "未知错误");
-      }
-    } catch (e) { showModal("保存失败", String(e)); }
-    finally { showLoading(false); }
-    return;
-  }
-
-  const servers = parseServersText($("serversText").value);
-  const cfg = { ...baseCfg, servers, bark_keys: state.barkKeys };
-
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/config"), {
@@ -952,10 +903,8 @@ $("saveConfigBtn").addEventListener("click", async () => {
     const data = await r.json();
     if (data.ok) {
       state.config = data.config;
-      state.configLoaded = true;
-      state.serversTextDirty = false;  // 保存成功，清除 dirty
       state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
-      showModal("保存成功", `已保存 ${servers.length} 台服务器、${state.barkKeys.length} 个 Bark 密钥。`);
+      showModal("保存成功", "运行参数已更新。");
     } else {
       showModal("保存失败", data.msg || "未知错误");
     }
@@ -963,24 +912,15 @@ $("saveConfigBtn").addEventListener("click", async () => {
   finally { showLoading(false); }
 });
 
-// 用户编辑服务器列表时标记 dirty
-$("serversText").addEventListener("input", () => {
-  state.serversTextDirty = true;
-});
-
 // ---------- 启动 / 停止 ----------
 $("startBtn").addEventListener("click", async () => {
-  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
+  if (!state.backendUrl) return;
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/start"), { method: "POST" });
     const data = await r.json();
     if (!data.ok) showModal("启动失败", data.msg || "未知错误");
-    else {
-      state.running = true;
-      updateRunningState(true);
-      await loadConfig(true);
-    }
+    else { state.running = true; updateRunningState(true); await loadConfig(true); }
   } catch (e) { showModal("启动失败", String(e)); }
   finally { showLoading(false); }
 });
@@ -997,46 +937,49 @@ $("stopBtn").addEventListener("click", async () => {
   finally { showLoading(false); }
 });
 
-// ---------- 状态切换 ----------
 function updateRunningState(running) {
   state.running = running;
   const startBtn = $("startBtn");
   const stopBtn = $("stopBtn");
-  const serversText = $("serversText");
-  const editView = $("serverEditView");
-  const runView = $("serverRunView");
-  const modeBadge = $("serverListMode");
-
   if (running) {
     startBtn.disabled = true;
     stopBtn.disabled = false;
-    serversText.disabled = true;
-    editView.style.display = "none";
-    runView.style.display = "block";
-    modeBadge.textContent = "运行模式";
-    modeBadge.classList.add("run");
-    renderServerList();
   } else {
     startBtn.disabled = false;
     stopBtn.disabled = true;
-    serversText.disabled = false;
-    editView.style.display = "block";
-    runView.style.display = "none";
-    modeBadge.textContent = "编辑模式";
-    modeBadge.classList.remove("run");
   }
 }
 
-// ---------- 服务器复选列表 ----------
+// ---------- 服务器列表 编辑/视图 ----------
 function renderServerList() {
-  if (!state.running) return;
-  const servers = (state.config && state.config.servers) || [];
-  const list = $("serverCheckList");
-  if (!servers.length) {
-    list.innerHTML = '<div class="check-empty">列表为空，点击下方“新增”添加</div>';
+  const view = $("serverViewList");
+  const ta = $("serverEditTextarea");
+  const toggle = $("serverEditToggle");
+  const badge = $("serverListMode");
+
+  if (serverEditMode) {
+    view.style.display = "none";
+    ta.style.display = "block";
+    toggle.textContent = "完成";
+    toggle.classList.add("active");
+    badge.textContent = "编辑模式";
+    badge.classList.remove("run");
     return;
   }
-  list.innerHTML = servers.map((s, i) => `
+
+  view.style.display = "block";
+  ta.style.display = "none";
+  toggle.textContent = "编辑";
+  toggle.classList.remove("active");
+  badge.textContent = "视图模式";
+  badge.classList.remove("run");
+
+  const servers = (state.config && state.config.servers) || [];
+  if (!servers.length) {
+    view.innerHTML = '<div class="check-empty">暂无服务器，点击“编辑”添加</div>';
+    return;
+  }
+  view.innerHTML = servers.map((s, i) => `
     <label class="check-item">
       <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
       <span class="s-name">${escapeHtml(s.name)}</span>
@@ -1044,7 +987,7 @@ function renderServerList() {
     </label>
   `).join("");
 
-  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+  view.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     cb.addEventListener("change", async () => {
       const idx = parseInt(cb.dataset.idx);
       const srv = state.config.servers[idx];
@@ -1061,48 +1004,43 @@ function renderServerList() {
   });
 }
 
-// ---------- 新增 / 清空服务器 ----------
-$("addServerBtn").addEventListener("click", () => {
-  $("newServerName").value = "";
-  $("newServerIp").value = "";
-  $("addServerMask").classList.add("show");
-});
-$("addServerCancel").addEventListener("click", () => $("addServerMask").classList.remove("show"));
-$("addServerConfirm").addEventListener("click", async () => {
-  const name = $("newServerName").value.trim();
-  const ip = $("newServerIp").value.trim();
-  if (!name || !ip) { alert("请填写名称和 IP"); return; }
-  showLoading(true);
-  try {
-    const r = await fetch(apiUrl("/api/servers/add"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, ip }),
+$("serverEditToggle").addEventListener("click", async () => {
+  if (serverEditMode) {
+    // 完成编辑：解析 textarea，保存到后端
+    const text = $("serverEditTextarea").value;
+    const newServers = parseServersText(text);
+    // 保留原有的勾选状态（按 name+ip 匹配）
+    const oldMap = {};
+    (state.config.servers || []).forEach((s) => { oldMap[s.name + "|" + s.ip] = s.enabled !== false; });
+    newServers.forEach((s) => {
+      const k = s.name + "|" + s.ip;
+      if (oldMap[k] !== undefined) s.enabled = oldMap[k];
     });
-    const data = await r.json();
-    if (data.ok) {
-      state.config = data.config;
-      renderServerList();
-      $("addServerMask").classList.remove("show");
-    } else alert(data.msg || "添加失败");
-  } catch (e) { alert(String(e)); }
-  finally { showLoading(false); }
-});
 
-$("clearServersBtn").addEventListener("click", async () => {
-  if (!confirm("确认清空所有服务器？")) return;
-  showLoading(true);
-  try {
-    await fetch(apiUrl("/api/servers/clear"), { method: "POST" });
-    state.config.servers = [];
-    state.results = [];
+    showLoading(true);
+    try {
+      const r = await fetch(apiUrl("/api/config"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servers: newServers }),
+      });
+      const data = await r.json();
+      if (data.ok) {
+        state.config = data.config;
+        serverEditMode = false;
+        renderServerList();
+      } else {
+        showModal("保存失败", data.msg || "未知错误");
+      }
+    } catch (e) { showModal("保存失败", String(e)); }
+    finally { showLoading(false); }
+  } else {
+    serverEditMode = true;
     renderServerList();
-    renderTable();
-  } catch (e) { console.warn(e); }
-  finally { showLoading(false); }
+  }
 });
 
-// ---------- Bark 密钥列表 ----------
+// ---------- Bark 密钥 编辑/视图 ----------
 function renderBarkList() {
   const list = $("barkViewList");
   const ta = $("barkEditTextarea");
@@ -1182,6 +1120,66 @@ $("barkEditToggle").addEventListener("click", async () => {
   renderBarkList();
 });
 
+// ---------- 维护时段 编辑/视图 ----------
+function renderMaintenanceList() {
+  const view = $("maintViewList");
+  const ta = $("maintEditTextarea");
+  const toggle = $("maintEditToggle");
+  const badge = $("maintModeBadge");
+
+  if (maintEditMode) {
+    view.style.display = "none";
+    ta.style.display = "block";
+    ta.value = state.maintenanceWindows.join("\n");
+    toggle.textContent = "完成";
+    toggle.classList.add("active");
+    badge.textContent = "编辑模式";
+  } else {
+    view.style.display = "block";
+    ta.style.display = "none";
+    toggle.textContent = "编辑";
+    toggle.classList.remove("active");
+    badge.textContent = "视图模式";
+
+    if (!state.maintenanceWindows.length) {
+      view.innerHTML = '<div class="check-empty">未配置，点击“编辑”添加</div>';
+      return;
+    }
+    view.innerHTML = state.maintenanceWindows.map((w) => `
+      <div class="check-item" style="cursor:default;">
+        <span class="s-maint">🔧 ${escapeHtml(w)}</span>
+      </div>
+    `).join("");
+  }
+}
+
+async function saveMaintenanceToBackend() {
+  if (!state.backendUrl) return;
+  try {
+    const r = await fetch(apiUrl("/api/config"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ maintenance_windows: state.maintenanceWindows }),
+    });
+    const data = await r.json();
+    if (data.ok && data.config) {
+      state.maintenanceWindows = (data.config.maintenance_windows || []).slice();
+    }
+  } catch (e) { console.warn(e); }
+}
+
+$("maintEditToggle").addEventListener("click", async () => {
+  if (maintEditMode) {
+    const text = $("maintEditTextarea").value;
+    state.maintenanceWindows = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    await saveMaintenanceToBackend();
+    maintEditMode = false;
+  } else {
+    maintEditMode = true;
+  }
+  renderMaintenanceList();
+});
+
 // ---------- 清空日志 ----------
 async function clearLogs(which) {
   if (!state.backendUrl) return;
@@ -1228,7 +1226,7 @@ filterInput.addEventListener("input", () => {
   renderTable();
 });
 
-// ---------- 拉取状态（多设备同步核心） ----------
+// ---------- 拉取状态 ----------
 async function fetchStatus() {
   if (!state.backendUrl) return;
   try {
@@ -1240,7 +1238,10 @@ async function fetchStatus() {
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
 
-    // 运行状态变化时同步完整配置
+    // Bark 抑制状态
+    state.barkSuppressed = !!data.bark_suppressed;
+    maintBadge.classList.toggle("show", state.barkSuppressed);
+
     if (state.running !== wasRunning) {
       await loadConfig(true);
       updateRunningState(state.running);
@@ -1264,7 +1265,7 @@ async function fetchStatus() {
       }
     }
 
-    // Bark 列表同步（非编辑模式）
+    // Bark 列表同步
     if (!barkEditMode && Array.isArray(data.bark_keys)) {
       const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false }));
       if (JSON.stringify(newKeys) !== JSON.stringify(state.barkKeys)) {
@@ -1273,8 +1274,8 @@ async function fetchStatus() {
       }
     }
 
-    // 服务器列表同步：只在运行态自动更新（避免覆盖编辑态用户输入）
-    if (state.running && Array.isArray(data.servers_config)) {
+    // 服务器列表同步（非编辑模式）
+    if (!serverEditMode && Array.isArray(data.servers_config)) {
       if (!state.config) state.config = {};
       const newServers = data.servers_config.map((s) => ({
         name: s.name, ip: s.ip, enabled: s.enabled !== false
@@ -1288,7 +1289,6 @@ async function fetchStatus() {
       }
     }
 
-    // RTT 历史
     state.results.forEach((res) => {
       if (res.ok && typeof res.rtt_ms === "number") {
         const arr = state.rttHistory[res.name] || [];
@@ -1298,7 +1298,6 @@ async function fetchStatus() {
       }
     });
 
-    // 状态变化弹窗
     state.results.forEach((res) => {
       const prevOk = state.lastOkMap[res.name];
       if (prevOk === true && res.ok === false && res.streak === 1) {
@@ -1323,7 +1322,6 @@ async function fetchLogs() {
   } catch (e) { console.warn("拉取日志失败：", e); }
 }
 
-// ---------- 渲染表格 ----------
 function renderTable() {
   let list = state.results;
   if (state.filter) {
@@ -1419,7 +1417,6 @@ function drawSparkline(canvas, values) {
   ctx.fill();
 }
 
-// ---------- 日志染色 ----------
 function colorizeLogLine(line) {
   let html = escapeHtml(line);
   html = html.replace(/TCP 超时/g, "\u0001TCP\u0002");
@@ -1455,19 +1452,13 @@ function renderLogs() {
 
 // ---------- 初始化 ----------
 function init() {
-  if (state.backendUrl) {
-    $("backendUrl").value = state.backendUrl;
-    // 强制拉取完整配置 + 状态 + 日志
-    loadConfig(true);
-    fetchStatus();
-    fetchLogs();
-  } else {
-    showModal("欢迎使用",
-      "请先在左侧「后端地址」里填写你的 Render 地址，然后点击「保存后端地址」。\n\n如需了解更多，可点右上角 ? 查看使用说明。");
-  }
+  // 后端地址已硬编码，直接拉取全部数据
+  loadConfig(true);
+  fetchStatus();
+  fetchLogs();
+
   setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
-  // 每 5 秒强制同步一次完整配置（多设备同步关键）
   setInterval(() => { if (state.backendUrl) loadConfig(true); }, POLL_CONFIG);
 }
 
