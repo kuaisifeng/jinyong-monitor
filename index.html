@@ -11,20 +11,18 @@
     --bg-card-hover: #1a2138;
     --bg-input: #0d1220;
     --border: #232a3d;
-    --text: #e6ebf5;
+    --text: #ffffff;
     --text-dim: #8892a8;
     --text-mute: #5a6478;
     --accent: #4d9eff;
     --accent-hover: #6cafff;
-    --online: #00e676;
-    --offline: #ff5252;
+    --online: #4ade80;
+    --offline: #f87171;
     --warning: #ffb74d;
     --radius: 12px;
     --shadow: 0 4px 20px rgba(0,0,0,0.35);
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body {
     height: 100%;
     background: var(--bg);
@@ -34,519 +32,322 @@
     overflow: hidden;
   }
 
-  /* ============ 顶部状态栏 ============ */
   .topbar {
-    display: flex;
-    align-items: center;
-    height: 56px;
-    padding: 0 18px;
+    display: flex; align-items: center; height: 56px; padding: 0 18px;
     background: linear-gradient(180deg, #131826 0%, #0f1422 100%);
-    border-bottom: 1px solid var(--border);
-    gap: 16px;
-    position: relative;
-    z-index: 20;
+    border-bottom: 1px solid var(--border); gap: 16px; position: relative; z-index: 20;
   }
-  .logo {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
+  .logo { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .logo-icon {
     width: 28px; height: 28px;
     background: linear-gradient(135deg, var(--accent), #7c5cff);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    box-shadow: 0 0 12px rgba(77,158,255,0.4);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; box-shadow: 0 0 12px rgba(77,158,255,0.4);
   }
   .topbar-notice {
-    flex: 1;
-    text-align: center;
-    color: var(--text-mute);
-    font-size: 12px;
-    padding: 6px 12px;
-    background: rgba(77,158,255,0.06);
-    border: 1px solid rgba(77,158,255,0.15);
-    border-radius: 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 1; text-align: center; color: var(--text-mute); font-size: 12px;
+    padding: 6px 12px; background: rgba(77,158,255,0.06);
+    border: 1px solid rgba(77,158,255,0.15); border-radius: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-  }
+  .topbar-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
   .clock {
-    font-family: "Consolas", "Monaco", monospace;
-    font-size: 13px;
-    color: var(--text-dim);
+    font-family: "Consolas", "Monaco", monospace; font-size: 13px; color: var(--text-dim);
   }
+  .clock b { color: var(--accent); font-weight: 500; font-size: 11px; margin-left: 4px; }
   .run-indicator {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(136,146,168,0.1);
-    border: 1px solid var(--border);
-    font-size: 12px;
+    display: flex; align-items: center; gap: 6px; padding: 4px 10px;
+    border-radius: 999px; background: rgba(136,146,168,0.1);
+    border: 1px solid var(--border); font-size: 12px;
   }
   .run-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--text-mute);
-    transition: background 0.3s;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-mute); transition: background 0.3s;
   }
   .run-indicator.running .run-dot {
-    background: var(--online);
-    box-shadow: 0 0 8px var(--online);
+    background: var(--online); box-shadow: 0 0 8px var(--online);
     animation: pulse 2s infinite;
   }
   .run-indicator.running .run-text { color: var(--online); }
   .run-indicator.stopped .run-dot { background: var(--offline); }
   .run-indicator.stopped .run-text { color: var(--offline); }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  /* ============ 主体 ============ */
-  .main {
-    display: flex;
-    height: calc(100vh - 56px);
-    overflow: hidden;
-  }
+  .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
-  /* ============ 侧边栏 ============ */
   .sidebar {
-    width: 300px;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    transition: width 0.25s ease;
-    flex-shrink: 0;
-    overflow: hidden;
+    width: 320px; background: var(--bg-card); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; transition: width 0.25s ease;
+    flex-shrink: 0; overflow: hidden;
   }
   .sidebar.collapsed { width: 44px; }
   .sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
   }
   .sidebar-header span {
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
+    font-weight: 600; font-size: 13px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;
   }
   .sidebar.collapsed .sidebar-header span { display: none; }
   .collapse-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: all 0.2s;
+    background: transparent; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 6px;
   }
-  .collapse-btn:hover {
-    background: var(--bg-card-hover);
-    color: var(--text);
-  }
-  .sidebar-content {
-    padding: 16px;
-    overflow-y: auto;
-    flex: 1;
-  }
+  .collapse-btn:hover { background: var(--bg-card-hover); color: var(--text); }
+  .sidebar-content { padding: 16px; overflow-y: auto; flex: 1; }
   .sidebar.collapsed .sidebar-content { display: none; }
 
   .field { margin-bottom: 14px; }
   .field label {
-    display: block;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-    font-weight: 500;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500;
   }
-  .field input, .field textarea {
-    width: 100%;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    color: var(--text);
-    font-size: 13px;
-    font-family: inherit;
+  .field label .badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 999px;
+    background: rgba(77,158,255,0.15); color: var(--accent); font-weight: 600;
+  }
+  .field label .badge.run {
+    background: rgba(74,222,128,0.15); color: var(--online);
+  }
+  .field input, .field textarea, .field select {
+    width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; color: var(--text);
+    font-size: 13px; font-family: inherit; outline: none;
     transition: border-color 0.2s;
-    outline: none;
   }
-  .field input:focus, .field textarea:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
   }
   .field textarea {
-    min-height: 110px;
-    resize: vertical;
-    font-family: "Consolas", "Monaco", monospace;
-    font-size: 12px;
-    line-height: 1.5;
+    min-height: 110px; resize: vertical;
+    font-family: "Consolas", "Monaco", monospace; font-size: 12px; line-height: 1.5;
+  }
+  .field textarea:disabled, .field input:disabled {
+    opacity: 0.5; cursor: not-allowed;
   }
 
-  .btn {
-    width: 100%;
-    padding: 9px 14px;
-    border: none;
-    border-radius: 8px;
-    background: var(--bg-card-hover);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
+  /* 服务器复选列表 */
+  .server-check-list {
+    max-height: 220px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-input); padding: 6px;
+  }
+  .server-check-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer;
+    transition: background 0.15s;
+    font-size: 12px;
+  }
+  .server-check-item:hover { background: var(--bg-card-hover); }
+  .server-check-item input[type="checkbox"] {
+    width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer;
+  }
+  .server-check-item .s-name { color: var(--text); font-weight: 500; flex-shrink: 0; }
+  .server-check-item .s-ip {
+    color: var(--text-mute);
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 11px; margin-left: auto;
+  }
+  .server-check-empty {
+    color: var(--text-mute); text-align: center; padding: 16px;
+    font-size: 12px;
+  }
+  .server-run-actions {
+    display: flex; gap: 6px; margin-top: 6px;
+  }
+  .btn-mini {
+    flex: 1; padding: 5px 8px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim);
+    font-size: 11px; border-radius: 6px; cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 8px;
     font-family: inherit;
+  }
+  .btn-mini:hover { color: var(--text); border-color: var(--accent); }
+  .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
+
+  .btn {
+    width: 100%; padding: 9px 14px; border: none; border-radius: 8px;
+    background: var(--bg-card-hover); color: var(--text);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 8px; font-family: inherit;
   }
   .btn:hover { background: #202844; }
   .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn.primary {
-    background: var(--accent);
-    color: #fff;
-  }
-  .btn.primary:hover { background: var(--accent-hover); }
-  .btn.success {
-    background: #00a854;
-    color: #fff;
-  }
-  .btn.success:hover { background: #00c264; }
-  .btn.danger {
-    background: #d32f2f;
-    color: #fff;
-  }
-  .btn.danger:hover { background: #f44336; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:disabled:hover { background: var(--bg-card-hover); }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn.success { background: #00a854; color: #fff; }
+  .btn.success:hover:not(:disabled) { background: #00c264; }
+  .btn.danger { background: #d32f2f; color: #fff; }
+  .btn.danger:hover:not(:disabled) { background: #f44336; }
 
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 16px 0;
-  }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
-  /* ============ 右侧内容区 ============ */
   .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 16px;
-    gap: 12px;
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; padding: 16px; gap: 12px;
   }
-
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
+  .toolbar { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
   .toolbar input {
-    flex: 1;
-    max-width: 320px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: var(--text);
-    font-size: 13px;
+    flex: 1; max-width: 320px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; color: var(--text); font-size: 13px;
     outline: none;
-    transition: border-color 0.2s;
   }
   .toolbar input:focus { border-color: var(--accent); }
-  .stats {
-    font-size: 12px;
-    color: var(--text-dim);
-  }
+  .stats { font-size: 12px; color: var(--text-dim); }
   .stats b { color: var(--online); font-weight: 600; }
   .stats i { color: var(--offline); font-style: normal; font-weight: 600; }
 
-  /* ============ 表格 ============ */
   .table-wrapper {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: auto;
-    flex: 0 1 auto;
-    max-height: 46%;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: auto; flex: 0 1 auto; max-height: 46%;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  thead {
-    position: sticky;
-    top: 0;
-    background: #0f1422;
-    z-index: 2;
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { position: sticky; top: 0; background: #0f1422; z-index: 2; }
   th {
-    text-align: left;
-    padding: 10px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+    text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
   }
   tbody tr {
     border-bottom: 1px solid rgba(35,42,61,0.5);
     transition: background 0.15s;
   }
-  tbody tr:hover {
-    background: var(--bg-card-hover);
-  }
+  tbody tr:hover { background: var(--bg-card-hover); }
   tbody tr:last-child { border-bottom: none; }
   td {
-    padding: 10px 12px;
-    color: var(--text);
-    white-space: nowrap;
-    vertical-align: middle;
+    padding: 10px 12px; color: var(--text);
+    white-space: nowrap; vertical-align: middle;
   }
-  td.mono {
-    font-family: "Consolas", "Monaco", monospace;
-    font-size: 12px;
-  }
+  td.mono { font-family: "Consolas", "Monaco", monospace; font-size: 12px; }
   .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; margin-right: 6px; vertical-align: middle;
   }
-  .status-dot.online {
-    background: var(--online);
-    box-shadow: 0 0 8px rgba(0,230,118,0.6);
-  }
-  .status-dot.offline {
-    background: var(--offline);
-    box-shadow: 0 0 8px rgba(255,82,82,0.6);
-  }
-  .status-cell {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-  }
+  .status-dot.online { background: var(--online); box-shadow: 0 0 8px rgba(74,222,128,0.6); }
+  .status-dot.offline { background: var(--offline); box-shadow: 0 0 8px rgba(248,113,113,0.6); }
+  .status-cell { display: flex; align-items: center; font-weight: 500; }
   .status-cell.online { color: var(--online); }
   .status-cell.offline { color: var(--offline); }
-  .err-text {
-    color: var(--offline);
-    font-size: 12px;
-  }
+  .err-text { color: var(--offline); font-size: 12px; }
   .streak-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
   }
   .streak-badge.zero { background: rgba(136,146,168,0.12); color: var(--text-dim); }
   .streak-badge.low { background: rgba(255,183,77,0.15); color: var(--warning); }
-  .streak-badge.high { background: rgba(255,82,82,0.18); color: var(--offline); }
+  .streak-badge.high { background: rgba(248,113,113,0.18); color: var(--offline); }
+  .sparkline { display: block; width: 80px; height: 24px; }
 
-  /* 迷你折线图 */
-  .sparkline {
-    display: block;
-    width: 80px;
-    height: 24px;
-  }
-
-  /* ============ 日志面板 ============ */
   .log-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; min-height: 0;
   }
   .log-tabs {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    background: #0f1422;
-    gap: 6px;
+    display: flex; align-items: center; padding: 8px 12px;
+    border-bottom: 1px solid var(--border); background: #0f1422; gap: 6px;
   }
   .tab {
-    padding: 6px 14px;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
+    padding: 6px 14px; border: none; background: transparent;
+    color: var(--text-dim); font-size: 12px; font-weight: 500;
+    cursor: pointer; border-radius: 6px; transition: all 0.2s;
     font-family: inherit;
   }
   .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-  .tab.active {
-    color: var(--accent);
-    background: rgba(77,158,255,0.1);
-  }
-  .log-actions {
-    margin-left: auto;
-    display: flex;
-    gap: 6px;
-  }
+  .tab.active { color: var(--accent); background: rgba(77,158,255,0.1); }
+  .log-actions { margin-left: auto; display: flex; gap: 6px; }
   .log-actions button {
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 11px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: inherit;
+    padding: 5px 10px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim);
+    font-size: 11px; border-radius: 6px; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
   }
   .log-actions button:hover { color: var(--text); border-color: var(--accent); }
   .log-actions button.active {
-    background: rgba(77,158,255,0.1);
-    color: var(--accent);
-    border-color: var(--accent);
+    background: rgba(77,158,255,0.1); color: var(--accent); border-color: var(--accent);
   }
   .log-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 16px;
+    flex: 1; overflow-y: auto; padding: 12px 16px;
     font-family: "Consolas", "Monaco", "Courier New", monospace;
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--text-dim);
-    white-space: pre-wrap;
-    word-break: break-all;
+    font-size: 12px; line-height: 1.7;
+    color: #ffffff;
+    white-space: pre-wrap; word-break: break-all;
   }
   .log-content::-webkit-scrollbar { width: 8px; height: 8px; }
-  .log-content::-webkit-scrollbar-thumb {
-    background: #2a3350;
-    border-radius: 4px;
-  }
+  .log-content::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 4px; }
   .log-content::-webkit-scrollbar-thumb:hover { background: #3a4570; }
-  .log-line { display: block; }
-  .log-line.error { color: var(--offline); }
-  .log-line.timeout { color: var(--warning); }
+  .log-line { display: block; color: #ffffff; }
+  .kw-green { color: #4ade80; font-weight: 600; }
+  .kw-red { color: #f87171; font-weight: 600; }
 
-  /* ============ 弹窗 ============ */
   .modal-mask {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; backdrop-filter: blur(4px);
   }
   .modal-mask.show { display: flex; }
   .modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    min-width: 300px;
-    max-width: 90vw;
-    box-shadow: var(--shadow);
-    animation: modalIn 0.2s ease;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    min-width: 300px; max-width: 90vw;
+    box-shadow: var(--shadow); animation: modalIn 0.2s ease;
   }
   @keyframes modalIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
   }
-  .modal h3 {
-    font-size: 16px;
-    margin-bottom: 12px;
-    color: var(--warning);
-  }
+  .modal h3 { font-size: 16px; margin-bottom: 12px; color: var(--warning); }
   .modal p {
-    color: var(--text-dim);
-    line-height: 1.6;
-    font-size: 13px;
-    margin-bottom: 18px;
-    white-space: pre-wrap;
+    color: var(--text-dim); line-height: 1.6;
+    font-size: 13px; margin-bottom: 18px; white-space: pre-wrap;
   }
+  .modal input {
+    width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; color: var(--text);
+    font-size: 13px; font-family: inherit; outline: none;
+    margin-bottom: 10px;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
   .modal button {
-    padding: 8px 18px;
-    border: none;
-    border-radius: 8px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    font-family: inherit;
+    padding: 8px 18px; border: none; border-radius: 8px;
+    background: var(--accent); color: #fff; font-size: 13px;
+    cursor: pointer; font-family: inherit;
   }
+  .modal button.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
 
-  /* ============ Loading ============ */
   .loading {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 20px;
-    height: 20px;
-    display: none;
-    z-index: 999;
+    position: fixed; top: 12px; right: 12px;
+    width: 20px; height: 20px; display: none; z-index: 999;
   }
   .loading.show { display: block; }
   .loading::after {
-    content: "";
-    display: block;
-    width: 16px; height: 16px;
+    content: ""; display: block; width: 16px; height: 16px;
     border: 2px solid rgba(77,158,255,0.2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
+    border-top-color: var(--accent); border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ============ 移动端适配 ============ */
   @media (max-width: 900px) {
     .topbar { padding: 0 10px; gap: 8px; }
     .topbar-notice { display: none; }
     .logo { font-size: 13px; }
     .logo span:last-child { display: none; }
     .sidebar {
-      position: absolute;
-      top: 56px;
-      left: 0;
-      height: calc(100vh - 56px);
-      z-index: 50;
+      position: absolute; top: 56px; left: 0;
+      height: calc(100vh - 56px); z-index: 50;
       box-shadow: 4px 0 20px rgba(0,0,0,0.5);
     }
     .sidebar:not(.collapsed) { width: 280px; }
-    .sidebar.collapsed {
-      width: 0;
-      border-right: none;
-    }
-    .sidebar.collapsed .sidebar-header { padding: 14px 6px; }
-    .sidebar.collapsed .collapse-btn { color: var(--accent); }
+    .sidebar.collapsed { width: 0; border-right: none; }
     .content { padding: 10px; }
     .clock { display: none; }
     .table-wrapper { max-height: 40%; }
@@ -555,17 +356,16 @@
 </head>
 <body>
 
-<!-- ============ 顶部状态栏 ============ -->
 <div class="topbar">
   <div class="logo">
     <div class="logo-icon">⚔</div>
     <span>金庸群侠传至尊服务器监控面板</span>
   </div>
   <div class="topbar-notice">
-    ⚡ 浏览器网页关闭就停止刷新 · TCP 探针发包 / Bark 推送 / 持续后台监控由后端 Python 脚本完成 · 网页只做前端展示与配置
+    ⚡ 浏览器网页关闭就停止刷新 · TCP 探针发包 / Bark 推送 / 持续后台监控由后端 Python 脚本完成 · 网页只做展示与配置
   </div>
   <div class="topbar-right">
-    <div class="clock" id="clock">--:--:--</div>
+    <div class="clock" id="clock">--:--:--<b>UTC+8</b></div>
     <div class="run-indicator stopped" id="runIndicator">
       <span class="run-dot"></span>
       <span class="run-text" id="runText">未运行</span>
@@ -573,14 +373,11 @@
   </div>
 </div>
 
-<!-- ============ 主体 ============ -->
 <div class="main">
-
-  <!-- 侧边栏 -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>配置</span>
-      <button class="collapse-btn" id="collapseBtn" title="折叠/展开">◀</button>
+      <button class="collapse-btn" id="collapseBtn">◀</button>
     </div>
     <div class="sidebar-content">
 
@@ -593,8 +390,19 @@
       <div class="divider"></div>
 
       <div class="field">
-        <label>服务器列表（每行一个：名称 IP）</label>
-        <textarea id="serversText" placeholder="18区 49.234.85.110&#10;17区 49.235.42.168&#10;15区 49.235.253.176"></textarea>
+        <label>服务器列表 <span class="badge" id="serverListMode">编辑模式</span></label>
+        <!-- 编辑态 -->
+        <div id="serverEditView">
+          <textarea id="serversText" placeholder="18区 49.234.85.110&#10;17区 49.235.42.168"></textarea>
+        </div>
+        <!-- 运行态 -->
+        <div id="serverRunView" style="display:none;">
+          <div class="server-check-list" id="serverCheckList"></div>
+          <div class="server-run-actions">
+            <button class="btn-mini" id="addServerBtn">＋ 新增</button>
+            <button class="btn-mini danger" id="clearServersBtn">🗑 清空</button>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -613,13 +421,24 @@
       </div>
 
       <div class="field">
+        <label>时区</label>
+        <select id="timezoneSelect">
+          <option value="8" selected>UTC+8（北京时间）</option>
+          <option value="0">UTC+0（标准时间）</option>
+          <option value="9">UTC+9（东京）</option>
+          <option value="7">UTC+7（曼谷）</option>
+          <option value="-5">UTC-5（纽约）</option>
+        </select>
+      </div>
+
+      <div class="field">
         <label>Bark 密钥</label>
         <input type="text" id="barkKeyInput" placeholder="粘贴你的 Bark device_key">
       </div>
 
       <button class="btn primary" id="saveConfigBtn">💾 保存配置到后端</button>
       <button class="btn success" id="startBtn">▶ 启动监控</button>
-      <button class="btn danger" id="stopBtn">■ 停止监控</button>
+      <button class="btn danger" id="stopBtn" disabled>■ 停止监控</button>
 
       <div class="divider"></div>
 
@@ -629,28 +448,19 @@
     </div>
   </aside>
 
-  <!-- 右侧内容 -->
   <section class="content">
-
     <div class="toolbar">
       <input type="text" id="filterInput" placeholder="🔍 筛选服务器名称或 IP...">
       <div class="stats" id="statsText">共 0 台 · <b>在线 0</b> · <i>离线 0</i></div>
     </div>
 
-    <!-- 服务器表格 -->
     <div class="table-wrapper">
       <table>
         <thead>
           <tr>
-            <th>状态</th>
-            <th>名称</th>
-            <th>IP</th>
-            <th>端口</th>
-            <th>RTT 延迟</th>
-            <th>总耗时</th>
-            <th>连续超时</th>
-            <th>备注</th>
-            <th>延迟趋势</th>
+            <th>状态</th><th>名称</th><th>IP</th><th>端口</th>
+            <th>RTT 延迟</th><th>总耗时</th><th>连续超时</th>
+            <th>备注</th><th>延迟趋势</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -659,7 +469,6 @@
       </table>
     </div>
 
-    <!-- 日志面板 -->
     <div class="log-panel">
       <div class="log-tabs">
         <button class="tab active" data-tab="check">📋 实时检测日志</button>
@@ -672,48 +481,60 @@
       </div>
       <pre class="log-content" id="logContent">暂无日志...</pre>
     </div>
-
   </section>
 </div>
 
-<!-- 弹窗 -->
+<!-- 通用弹窗 -->
 <div class="modal-mask" id="modalMask">
   <div class="modal">
     <h3 id="modalTitle">提示</h3>
     <p id="modalBody"></p>
-    <button id="modalClose">知道了</button>
+    <div class="actions" id="modalActions">
+      <button id="modalClose">知道了</button>
+    </div>
   </div>
 </div>
 
-<!-- Loading -->
+<!-- 新增服务器弹窗 -->
+<div class="modal-mask" id="addServerMask">
+  <div class="modal">
+    <h3 style="color:var(--accent)">新增服务器</h3>
+    <p style="margin-bottom:10px;">输入名称和 IP，点击确认后会自动加入监控列表并默认勾选。</p>
+    <input type="text" id="newServerName" placeholder="名称，例如：18区">
+    <input type="text" id="newServerIp" placeholder="IP，例如：49.234.85.110">
+    <div class="actions">
+      <button class="ghost" id="addServerCancel">取消</button>
+      <button id="addServerConfirm">确认添加</button>
+    </div>
+  </div>
+</div>
+
 <div class="loading" id="loading"></div>
 
 <script>
 /* ================================================================
  *  金庸群侠传至尊服务器监控面板 · 前端逻辑
- *  数据来源：后端 Flask API（/api/status、/api/logs、/api/config 等）
  * ================================================================ */
-
-// ---------- 全局状态 ----------
 const state = {
   backendUrl: localStorage.getItem("backendUrl") || "",
   running: false,
   results: [],
+  config: null,
   logs: [],
   timeoutLogs: [],
   currentTab: "check",
   autoScroll: true,
   filter: "",
-  rttHistory: {},          // name -> [rtt_ms, ...]，最多保留 30 个
-  lastOkMap: {},           // name -> 上次是否在线，用于检测状态变化触发弹窗
+  rttHistory: {},
+  lastOkMap: {},
   configLoaded: false,
+  timezoneOffset: 8,
 };
 
 const MAX_RTT_HISTORY = 30;
-const POLL_INTERVAL = 5000;   // 每 5 秒拉一次状态
-const POLL_LOGS = 8000;        // 每 8 秒拉一次日志
+const POLL_INTERVAL = 5000;
+const POLL_LOGS = 8000;
 
-// ---------- DOM 引用 ----------
 const $ = (id) => document.getElementById(id);
 const clockEl = $("clock");
 const runIndicator = $("runIndicator");
@@ -724,46 +545,44 @@ const statsText = $("statsText");
 const filterInput = $("filterInput");
 const loading = $("loading");
 
-// ---------- 工具函数 ----------
-function showLoading(show) {
-  loading.classList.toggle("show", show);
-}
+function showLoading(show) { loading.classList.toggle("show", show); }
 
-function nowStr() {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function nowStr(offsetHours) {
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const d = new Date(utcMs + offsetHours * 3600000);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 function apiUrl(path) {
-  let base = state.backendUrl.trim().replace(/\/+$/, "");
-  return base + path;
+  return state.backendUrl.trim().replace(/\/+$/, "") + path;
 }
 
-// ---------- 时钟 ----------
 setInterval(() => {
-  clockEl.textContent = nowStr();
+  clockEl.innerHTML = nowStr(state.timezoneOffset) + `<b>UTC${state.timezoneOffset>=0?'+':''}${state.timezoneOffset}</b>`;
 }, 1000);
-clockEl.textContent = nowStr();
 
-// ---------- 侧边栏折叠 ----------
 $("collapseBtn").addEventListener("click", () => {
   const sb = $("sidebar");
   sb.classList.toggle("collapsed");
   $("collapseBtn").textContent = sb.classList.contains("collapsed") ? "▶" : "◀";
 });
 
-// ---------- 弹窗 ----------
-function showModal(title, body) {
+function showModal(title, body, onClose) {
   $("modalTitle").textContent = title;
   $("modalBody").textContent = body;
   $("modalMask").classList.add("show");
+  const btn = $("modalClose");
+  const handler = () => {
+    $("modalMask").classList.remove("show");
+    btn.removeEventListener("click", handler);
+    if (onClose) onClose();
+  };
+  btn.addEventListener("click", handler);
 }
-$("modalClose").addEventListener("click", () => {
-  $("modalMask").classList.remove("show");
-});
 
-// ---------- 后端地址保存 ----------
 $("saveBackendBtn").addEventListener("click", () => {
   let url = $("backendUrl").value.trim();
   if (!url) { showModal("提示", "后端地址不能为空"); return; }
@@ -771,14 +590,13 @@ $("saveBackendBtn").addEventListener("click", () => {
   state.backendUrl = url.replace(/\/+$/, "");
   localStorage.setItem("backendUrl", state.backendUrl);
   $("backendUrl").value = state.backendUrl;
-  showModal("已保存", "后端地址已保存：\n" + state.backendUrl + "\n\n开始拉取数据...");
   state.configLoaded = false;
   loadConfig();
   fetchStatus();
   fetchLogs();
+  showModal("已保存", "后端地址已保存：\n" + state.backendUrl);
 });
 
-// ---------- 解析服务器列表文本 ----------
 function parseServersText(text) {
   const servers = [];
   text.split(/\r?\n/).forEach((line) => {
@@ -789,41 +607,71 @@ function parseServersText(text) {
     const ip = m[1];
     let name = line.slice(0, m.index).replace(/[*,\t]+/g, " ").trim();
     if (!name) name = ip;
-    servers.push({ name, ip });
+    servers.push({ name, ip, enabled: true });
   });
   return servers;
 }
 
-// ---------- 加载后端配置 ----------
 async function loadConfig() {
   if (!state.backendUrl || state.configLoaded) return;
   try {
     const r = await fetch(apiUrl("/api/config"));
     const cfg = await r.json();
-    $("serversText").value = (cfg.servers || [])
-      .map((s) => `${s.name} ${s.ip}`)
-      .join("\n");
+    state.config = cfg;
+    $("serversText").value = (cfg.servers || []).map((s) => `${s.name} ${s.ip}`).join("\n");
     $("portInput").value = cfg.port || 6732;
     $("intervalInput").value = cfg.interval || 20;
     $("alertStreakInput").value = cfg.alert_streak || 5;
     $("barkKeyInput").value = cfg.bark_key || "";
+    $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
+    state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
     state.configLoaded = true;
+    renderServerList();
   } catch (e) {
     console.warn("加载配置失败：", e);
   }
 }
 
-// ---------- 保存配置到后端 ----------
-$("saveConfigBtn").addEventListener("click", async () => {
-  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
-  const servers = parseServersText($("serversText").value);
-  const cfg = {
+function collectConfig() {
+  return {
     port: parseInt($("portInput").value) || 6732,
     interval: parseFloat($("intervalInput").value) || 20,
     alert_streak: parseInt($("alertStreakInput").value) || 5,
     bark_key: $("barkKeyInput").value.trim(),
-    servers: servers,
+    timezone_offset: parseInt($("timezoneSelect").value) || 0,
+    servers: parseServersText($("serversText").value),
   };
+}
+
+$("saveConfigBtn").addEventListener("click", async () => {
+  if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
+  if (state.running) {
+    // 运行态：只更新非服务器字段，服务器列表由复选框管理
+    const cfg = collectConfig();
+    delete cfg.servers;
+    showLoading(true);
+    try {
+      const r = await fetch(apiUrl("/api/config"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cfg),
+      });
+      const data = await r.json();
+      if (data.ok) {
+        state.config = data.config;
+        state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
+        showModal("保存成功", "运行参数已更新。");
+      } else {
+        showModal("保存失败", data.msg || "未知错误");
+      }
+    } catch (e) {
+      showModal("保存失败", String(e));
+    } finally { showLoading(false); }
+    return;
+  }
+
+  // 编辑态：完整保存
+  const cfg = collectConfig();
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/config"), {
@@ -833,46 +681,161 @@ $("saveConfigBtn").addEventListener("click", async () => {
     });
     const data = await r.json();
     if (data.ok) {
-      showModal("保存成功", `已保存 ${servers.length} 台服务器配置。\n点击“启动监控”开始探测。`);
+      state.config = data.config;
       state.configLoaded = true;
+      state.timezoneOffset = parseInt(data.config.timezone_offset ?? 8);
+      showModal("保存成功", `已保存 ${cfg.servers.length} 台服务器配置。`);
     } else {
       showModal("保存失败", data.msg || "未知错误");
     }
   } catch (e) {
     showModal("保存失败", String(e));
-  } finally {
-    showLoading(false);
-  }
+  } finally { showLoading(false); }
 });
 
-// ---------- 启动 / 停止 ----------
-$("startBtn").addEventListener("click", async () => {
+async function startMonitor() {
   if (!state.backendUrl) { showModal("提示", "请先设置后端地址"); return; }
   showLoading(true);
   try {
     const r = await fetch(apiUrl("/api/start"), { method: "POST" });
     const data = await r.json();
-    if (!data.ok) showModal("启动失败", data.msg || "未知错误");
+    if (!data.ok) {
+      showModal("启动失败", data.msg || "未知错误");
+    } else {
+      state.running = true;
+      await loadConfig();
+      updateRunningState(true);
+    }
   } catch (e) {
     showModal("启动失败", String(e));
-  } finally {
-    showLoading(false);
-  }
-});
+  } finally { showLoading(false); }
+}
 
-$("stopBtn").addEventListener("click", async () => {
+async function stopMonitor() {
   if (!state.backendUrl) return;
   showLoading(true);
   try {
     await fetch(apiUrl("/api/stop"), { method: "POST" });
-  } catch (e) {
-    console.warn(e);
-  } finally {
-    showLoading(false);
+    state.running = false;
+    updateRunningState(false);
+  } catch (e) { console.warn(e); }
+  finally { showLoading(false); }
+}
+
+$("startBtn").addEventListener("click", startMonitor);
+$("stopBtn").addEventListener("click", stopMonitor);
+
+/* ============ 运行态切换 ============ */
+function updateRunningState(running) {
+  state.running = running;
+  const startBtn = $("startBtn");
+  const stopBtn = $("stopBtn");
+  const serversText = $("serversText");
+  const editView = $("serverEditView");
+  const runView = $("serverRunView");
+  const modeBadge = $("serverListMode");
+
+  if (running) {
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    serversText.disabled = true;
+    editView.style.display = "none";
+    runView.style.display = "block";
+    modeBadge.textContent = "运行模式";
+    modeBadge.classList.add("run");
+    renderServerList();
+  } else {
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    serversText.disabled = false;
+    editView.style.display = "block";
+    runView.style.display = "none";
+    modeBadge.textContent = "编辑模式";
+    modeBadge.classList.remove("run");
   }
+}
+
+/* ============ 服务器复选列表 ============ */
+function renderServerList() {
+  if (!state.running || !state.config) return;
+  const servers = state.config.servers || [];
+  const list = $("serverCheckList");
+  if (!servers.length) {
+    list.innerHTML = '<div class="server-check-empty">列表为空，点击下方“新增”添加</div>';
+    return;
+  }
+  list.innerHTML = servers.map((s, i) => `
+    <label class="server-check-item">
+      <input type="checkbox" data-index="${i}" ${s.enabled !== false ? "checked" : ""}>
+      <span class="s-name">${escapeHtml(s.name)}</span>
+      <span class="s-ip">${escapeHtml(s.ip)}</span>
+    </label>
+  `).join("");
+
+  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", async () => {
+      const idx = parseInt(cb.dataset.index);
+      const srv = state.config.servers[idx];
+      const enabled = cb.checked;
+      srv.enabled = enabled;
+      try {
+        await fetch(apiUrl("/api/servers/toggle"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: srv.name, enabled }),
+        });
+      } catch (e) { console.warn(e); }
+    });
+  });
+}
+
+/* ============ 新增服务器 ============ */
+$("addServerBtn").addEventListener("click", () => {
+  $("newServerName").value = "";
+  $("newServerIp").value = "";
+  $("addServerMask").classList.add("show");
+});
+$("addServerCancel").addEventListener("click", () => {
+  $("addServerMask").classList.remove("show");
+});
+$("addServerConfirm").addEventListener("click", async () => {
+  const name = $("newServerName").value.trim();
+  const ip = $("newServerIp").value.trim();
+  if (!name || !ip) { alert("请填写名称和 IP"); return; }
+  showLoading(true);
+  try {
+    const r = await fetch(apiUrl("/api/servers/add"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, ip }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      state.config = data.config;
+      renderServerList();
+      $("addServerMask").classList.remove("show");
+    } else {
+      alert(data.msg || "添加失败");
+    }
+  } catch (e) { alert(String(e)); }
+  finally { showLoading(false); }
 });
 
-// ---------- 清空日志 ----------
+/* ============ 清空服务器 ============ */
+$("clearServersBtn").addEventListener("click", async () => {
+  if (!confirm("确认清空所有服务器？")) return;
+  showLoading(true);
+  try {
+    await fetch(apiUrl("/api/servers/clear"), { method: "POST" });
+    state.config.servers = [];
+    state.results = [];
+    renderServerList();
+    renderTable();
+  } catch (e) { console.warn(e); }
+  finally { showLoading(false); }
+});
+
+/* ============ 清空日志 ============ */
 async function clearLogs(which) {
   if (!state.backendUrl) return;
   try {
@@ -881,8 +844,8 @@ async function clearLogs(which) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ which }),
     });
-    if (which === "check" || which === "all") { state.logs = []; }
-    if (which === "timeout" || which === "all") { state.timeoutLogs = []; }
+    if (which === "check" || which === "all") state.logs = [];
+    if (which === "timeout" || which === "all") state.timeoutLogs = [];
     renderLogs();
   } catch (e) { console.warn(e); }
 }
@@ -890,27 +853,20 @@ $("clearCheckLogBtn").addEventListener("click", () => clearLogs("check"));
 $("clearTimeoutLogBtn").addEventListener("click", () => clearLogs("timeout"));
 $("clearLogBtn").addEventListener("click", () => clearLogs(state.currentTab === "check" ? "check" : "timeout"));
 
-// ---------- 复制日志 ----------
 $("copyLogBtn").addEventListener("click", async () => {
-  const text = state.currentTab === "check"
-    ? state.logs.join("\n")
-    : state.timeoutLogs.join("\n");
+  const text = state.currentTab === "check" ? state.logs.join("\n") : state.timeoutLogs.join("\n");
   try {
     await navigator.clipboard.writeText(text);
     $("copyLogBtn").textContent = "已复制";
     setTimeout(() => { $("copyLogBtn").textContent = "复制"; }, 1500);
-  } catch (e) {
-    showModal("复制失败", "浏览器拒绝访问剪贴板");
-  }
+  } catch (e) { showModal("复制失败", "浏览器拒绝访问剪贴板"); }
 });
 
-// ---------- 自动滚动 ----------
 $("autoScrollBtn").addEventListener("click", () => {
   state.autoScroll = !state.autoScroll;
   $("autoScrollBtn").classList.toggle("active", state.autoScroll);
 });
 
-// ---------- 日志标签切换 ----------
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
@@ -920,22 +876,30 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
-// ---------- 筛选 ----------
 filterInput.addEventListener("input", () => {
   state.filter = filterInput.value.trim().toLowerCase();
   renderTable();
 });
 
-// ---------- 拉取状态 ----------
+/* ============ 拉取状态 ============ */
 async function fetchStatus() {
   if (!state.backendUrl) return;
   try {
     const r = await fetch(apiUrl("/api/status"));
     const data = await r.json();
+
+    const wasRunning = state.running;
     state.running = !!data.running;
     state.results = data.results || [];
+    if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
 
-    // 更新运行状态指示灯
+    if (state.running && !wasRunning) {
+      if (!state.config) await loadConfig();
+      updateRunningState(true);
+    } else if (!state.running && wasRunning) {
+      updateRunningState(false);
+    }
+
     if (state.running) {
       runIndicator.classList.add("running");
       runIndicator.classList.remove("stopped");
@@ -946,7 +910,6 @@ async function fetchStatus() {
       runText.textContent = "未运行";
     }
 
-    // 记录 RTT 历史
     state.results.forEach((res) => {
       if (res.ok && typeof res.rtt_ms === "number") {
         const arr = state.rttHistory[res.name] || [];
@@ -956,26 +919,19 @@ async function fetchStatus() {
       }
     });
 
-    // 检测状态从在线变离线 → 弹窗（第一次超时时提醒）
     state.results.forEach((res) => {
       const prevOk = state.lastOkMap[res.name];
       if (prevOk === true && res.ok === false && res.streak === 1) {
-        showModal(
-          "⚠️ 服务器超时",
-          `服务器：${res.name}\nIP：${res.ip}:${res.port}\n错误：${res.err}\n时间：${res.last_check}`
-        );
+        showModal("⚠️ 服务器超时",
+          `服务器：${res.name}\nIP：${res.ip}:${res.port}\n错误：${res.err}\n时间：${res.last_check}`);
       }
       state.lastOkMap[res.name] = res.ok;
     });
 
     renderTable();
-  } catch (e) {
-    // 静默失败（Render 冷启动或网络抖动）
-    console.warn("拉取状态失败：", e);
-  }
+  } catch (e) { console.warn("拉取状态失败：", e); }
 }
 
-// ---------- 拉取日志 ----------
 async function fetchLogs() {
   if (!state.backendUrl) return;
   try {
@@ -984,81 +940,66 @@ async function fetchLogs() {
     state.logs = data.logs || [];
     state.timeoutLogs = data.timeout_logs || [];
     renderLogs();
-  } catch (e) {
-    console.warn("拉取日志失败：", e);
-  }
+  } catch (e) { console.warn("拉取日志失败：", e); }
 }
 
-// ---------- 渲染表格 ----------
+/* ============ 渲染表格 ============ */
 function renderTable() {
   let list = state.results;
   if (state.filter) {
-    list = list.filter(
-      (r) =>
-        r.name.toLowerCase().includes(state.filter) ||
-        r.ip.toLowerCase().includes(state.filter)
+    list = list.filter((r) =>
+      r.name.toLowerCase().includes(state.filter) ||
+      r.ip.toLowerCase().includes(state.filter)
     );
   }
 
-  // 统计
   const total = state.results.length;
   const online = state.results.filter((r) => r.ok).length;
   const offline = total - online;
   statsText.innerHTML = `共 ${total} 台 · <b>在线 ${online}</b> · <i>离线 ${offline}</i>`;
 
   if (!list.length) {
-    tableBody.innerHTML =
-      '<tr><td colspan="9" style="text-align:center;padding:30px;color:#5a6478;">暂无数据</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#5a6478;">暂无数据</td></tr>';
     return;
   }
 
-  const rowsHtml = list
-    .map((r) => {
-      const statusClass = r.ok ? "online" : "offline";
-      const statusText = r.ok ? "在线" : "离线";
-      const streakClass = r.streak === 0 ? "zero" : r.streak >= 5 ? "high" : "low";
-      const rtt = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
-      const total = r.total_ms.toFixed(1) + " ms";
-      const err = r.err || "";
-      const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
-
-      return `
-        <tr>
-          <td><div class="status-cell ${statusClass}"><span class="status-dot ${statusClass}"></span>${statusText}</div></td>
-          <td>${escapeHtml(r.name)}</td>
-          <td class="mono">${r.ip}</td>
-          <td class="mono">${r.port}</td>
-          <td class="mono">${rtt}</td>
-          <td class="mono">${total}</td>
-          <td><span class="streak-badge ${streakClass}">${r.streak}</span></td>
-          <td class="err-text">${escapeHtml(err)}</td>
-          <td><canvas class="sparkline" id="${sparkId}" width="80" height="24"></canvas></td>
-        </tr>
-      `;
-    })
-    .join("");
+  const rowsHtml = list.map((r) => {
+    const statusClass = r.ok ? "online" : "offline";
+    const statusText = r.ok ? "在线" : "离线";
+    const streakClass = r.streak === 0 ? "zero" : r.streak >= 5 ? "high" : "low";
+    const rtt = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
+    const totalMs = r.total_ms.toFixed(1) + " ms";
+    const err = r.err || "";
+    const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
+    return `
+      <tr>
+        <td><div class="status-cell ${statusClass}"><span class="status-dot ${statusClass}"></span>${statusText}</div></td>
+        <td>${escapeHtml(r.name)}</td>
+        <td class="mono">${r.ip}</td>
+        <td class="mono">${r.port}</td>
+        <td class="mono">${rtt}</td>
+        <td class="mono">${totalMs}</td>
+        <td><span class="streak-badge ${streakClass}">${r.streak}</span></td>
+        <td class="err-text">${escapeHtml(err)}</td>
+        <td><canvas class="sparkline" id="${sparkId}" width="80" height="24"></canvas></td>
+      </tr>
+    `;
+  }).join("");
 
   tableBody.innerHTML = rowsHtml;
 
-  // 绘制折线图
   list.forEach((r) => {
     const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
     const canvas = document.getElementById(sparkId);
-    if (!canvas) return;
-    drawSparkline(canvas, state.rttHistory[r.name] || []);
+    if (canvas) drawSparkline(canvas, state.rttHistory[r.name] || []);
   });
 }
 
-// ---------- HTML 转义 ----------
 function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// ---------- 绘制迷你折线图 ----------
 function drawSparkline(canvas, values) {
   const ctx = canvas.getContext("2d");
   const w = canvas.width, h = canvas.height;
@@ -1073,11 +1014,8 @@ function drawSparkline(canvas, values) {
     return;
   }
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
-
-  // 填充渐变
   const grad = ctx.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, "rgba(77,158,255,0.35)");
   grad.addColorStop(1, "rgba(77,158,255,0)");
@@ -1088,7 +1026,6 @@ function drawSparkline(canvas, values) {
     return [x, y];
   });
 
-  // 填充
   ctx.beginPath();
   ctx.moveTo(pts[0][0], h);
   pts.forEach(([x, y]) => ctx.lineTo(x, y));
@@ -1097,14 +1034,12 @@ function drawSparkline(canvas, values) {
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // 线条
   ctx.beginPath();
   pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
   ctx.strokeStyle = "#4d9eff";
   ctx.lineWidth = 1.4;
   ctx.stroke();
 
-  // 最后一点
   const last = pts[pts.length - 1];
   ctx.beginPath();
   ctx.arc(last[0], last[1], 1.8, 0, Math.PI * 2);
@@ -1112,27 +1047,37 @@ function drawSparkline(canvas, values) {
   ctx.fill();
 }
 
-// ---------- 渲染日志 ----------
+/* ============ 日志染色 ============ */
+function colorizeLogLine(line) {
+  let html = escapeHtml(line);
+  // 先替换"TCP 超时"，避免和"离线"冲突
+  html = html.replace(/TCP 超时/g, '\u0001TCP\u0002');
+  html = html.replace(/无回包/g, '\u0001NOREPLY\u0002');
+  html = html.replace(/拒绝连接/g, '\u0001REFUSED\u0002');
+  html = html.replace(/回包非 F4 44/g, '\u0001BADPKT\u0002');
+  html = html.replace(/离线/g, '\u0001OFFLINE\u0002');
+  html = html.replace(/在线/g, '\u0001ONLINE\u0002');
+
+  html = html.replace(/\u0001TCP\u0002/g, '<span class="kw-red">TCP 超时</span>');
+  html = html.replace(/\u0001NOREPLY\u0002/g, '<span class="kw-red">无回包</span>');
+  html = html.replace(/\u0001REFUSED\u0002/g, '<span class="kw-red">拒绝连接</span>');
+  html = html.replace(/\u0001BADPKT\u0002/g, '<span class="kw-red">回包非 F4 44</span>');
+  html = html.replace(/\u0001OFFLINE\u0002/g, '<span class="kw-red">离线</span>');
+  html = html.replace(/\u0001ONLINE\u0002/g, '<span class="kw-green">在线</span>');
+  return html;
+}
+
 function renderLogs() {
   const lines = state.currentTab === "check" ? state.logs : state.timeoutLogs;
-
   if (!lines.length) {
     logContent.textContent = "暂无日志...";
     return;
   }
 
-  // 判断是否需要自动滚动
-  const wasAtBottom =
-    logContent.scrollTop + logContent.clientHeight >= logContent.scrollHeight - 20;
+  const wasAtBottom = logContent.scrollTop + logContent.clientHeight >= logContent.scrollHeight - 20;
 
-  // 简单渲染：每行按内容判断样式
   logContent.innerHTML = lines
-    .map((line) => {
-      let cls = "log-line";
-      if (/离线|超时|无回包|拒绝连接|非 F4 44/.test(line)) cls += " error";
-      if (/连续第/.test(line)) cls += " timeout";
-      return `<span class="${cls}">${escapeHtml(line)}</span>`;
-    })
+    .map((line) => `<span class="log-line">${colorizeLogLine(line)}</span>`)
     .join("\n");
 
   if (state.autoScroll && wasAtBottom) {
@@ -1140,22 +1085,17 @@ function renderLogs() {
   }
 }
 
-// ---------- 初始化 ----------
+/* ============ 初始化 ============ */
 function init() {
-  // 恢复后端地址
   if (state.backendUrl) {
     $("backendUrl").value = state.backendUrl;
     loadConfig();
     fetchStatus();
     fetchLogs();
   } else {
-    showModal(
-      "欢迎使用",
-      "请先在左侧“后端地址”里填写你的 Render 地址，然后点击“保存后端地址”。"
-    );
+    showModal("欢迎使用",
+      "请先在左侧“后端地址”里填写你的 Render 地址，然后点击“保存后端地址”。");
   }
-
-  // 定时拉取
   setInterval(fetchStatus, POLL_INTERVAL);
   setInterval(fetchLogs, POLL_LOGS);
 }
