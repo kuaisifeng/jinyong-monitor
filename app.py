@@ -37,6 +37,20 @@ MAX_CHECK_LOG = 100
 MAX_TIMEOUT_LOG = 1000
 DEFAULT_PORT = 6732
 
+# ==================== Render 资源监控配置 ====================
+# 从环境变量读取，禁止硬编码
+RENDER_API_TOKEN = os.getenv("RENDER_API_TOKEN", "")
+RENDER_SERVICE_ID = os.getenv("RENDER_SERVICE_ID", "")
+RENDER_LIMIT_BW_MB = 5120   # 免费 Hobby 计划 5 GB = 5120 MB
+RENDER_LIMIT_MEM_MB = 512   # 免费 Hobby 实例 512 MB
+RENDER_CACHE_SECONDS = 600  # 10 分钟缓存
+
+_render_cache = {
+    "data": None,
+    "expire": 0,
+}
+_render_lock = threading.Lock()
+
 # 中文星期映射
 WEEKDAY_CN = {
     "周一": 1, "周二": 2, "周三": 3, "周四": 4, "周五": 5,
@@ -44,7 +58,6 @@ WEEKDAY_CN = {
     "星期三": 3, "星期四": 4, "星期五": 5, "星期六": 6, "星期日": 7,
 }
 
-# 默认维护时段（游戏原生）
 DEFAULT_MAINTENANCE = [
     {"days": [1, 2, 3, 4, 5], "start": "07:00", "end": "07:30"},
     {"days": [6, 7], "start": "09:30", "end": "10:00"},
@@ -129,7 +142,6 @@ def load_config():
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-        # 旧版单 Bark 密钥迁移
         if "bark_key" in cfg and not isinstance(cfg.get("bark_keys"), list):
             old = cfg.pop("bark_key", "") or ""
             cfg["bark_keys"] = [{"key": old, "enabled": True}] if old.strip() else []
@@ -137,14 +149,12 @@ def load_config():
             if k == "maintenance_windows":
                 continue
             cfg.setdefault(k, v)
-        # 服务器补齐 port / enabled
         for s in cfg.get("servers", []):
             s.setdefault("enabled", True)
             try:
                 s["port"] = int(s.get("port") or DEFAULT_PORT)
             except Exception:
                 s["port"] = DEFAULT_PORT
-        # Bark 清洗
         cleaned = []
         for bk in cfg.get("bark_keys", []):
             if isinstance(bk, str):
@@ -154,7 +164,6 @@ def load_config():
                 continue
             cleaned.append({"key": key, "enabled": bool(bk.get("enabled", True))})
         cfg["bark_keys"] = cleaned
-        # 维护时段迁移
         cfg["maintenance_windows"] = migrate_maintenance_windows(
             cfg.get("maintenance_windows", None)
             if "maintenance_windows" in cfg else None
@@ -177,7 +186,6 @@ def now_str(offset=8):
 
 
 def is_in_maintenance(windows, dt):
-    """windows: [{"days":[1..7], "start":"HH:MM", "end":"HH:MM"}, ...]"""
     if not windows:
         return False
     wd = dt.isoweekday()
@@ -200,6 +208,87 @@ def is_in_maintenance(windows, dt):
             if hm >= t1 or hm < t2:
                 return True
     return False
+
+
+# ==================== Render 资源监控核心函数 ====================
+
+def fetch_render_metrics():
+    """调用 Render API 拉取带宽 + 内存"""
+    if not RENDER_API_TOKEN:
+        raise Exception("未配置环境变量 RENDER_API_TOKEN")
+    if not RENDER_SERVICE_ID:
+        raise Exception("未配置环境变量 RENDER_SERVICE_ID")
+
+    headers = {
+        "Authorization": f"Bearer {RENDER_API_TOKEN}",
+        "Accept": "application/json",
+    }
+
+    # UTC 本月 1 号 ~ 现在
+    now_utc = datetime.now(timezone.utc)
+    start = datetime(now_utc.year, now_utc.month, 1, tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    end = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # 1. 带宽（本月每小时增量，累加）
+    bw_url = (
+        f"https://api.render.com/v1/metrics/bandwidth"
+        f"?resource={RENDER_SERVICE_ID}"
+        f"&startTime={start}&endTime={end}&resolutionSeconds=3600"
+    )
+    bw_resp = requests.get(bw_url, headers=headers, timeout=15)
+    if bw_resp.status_code != 200:
+        raise Exception(f"带宽 API 返回 {bw_resp.status_code}: {bw_resp.text[:200]}")
+    bw_data = bw_resp.json()
+    total_bw_mb = 0.0
+    if isinstance(bw_data, list):
+        for series in bw_data:
+            for pt in series.get("values", []):
+                try:
+                    total_bw_mb += float(pt.get("value", 0))
+                except Exception:
+                    pass
+
+    # 2. 内存（取全部采样点中时间戳最新的）
+    mem_url = (
+        f"https://api.render.com/v1/metrics/memory"
+        f"?resource={RENDER_SERVICE_ID}"
+        f"&startTime={start}&endTime={end}&resolutionSeconds=3600"
+    )
+    mem_resp = requests.get(mem_url, headers=headers, timeout=15)
+    if mem_resp.status_code != 200:
+        raise Exception(f"内存 API 返回 {mem_resp.status_code}: {mem_resp.text[:200]}")
+    mem_data = mem_resp.json()
+    latest_ts = ""
+    latest_bytes = 0.0
+    if isinstance(mem_data, list):
+        for series in mem_data:
+            for pt in series.get("values", []):
+                ts = pt.get("timestamp", "")
+                if ts > latest_ts:
+                    latest_ts = ts
+                    try:
+                        latest_bytes = float(pt.get("value", 0))
+                    except Exception:
+                        latest_bytes = 0.0
+    mem_mb = latest_bytes / 1024 / 1024
+
+    bw_pct = round(min(total_bw_mb / RENDER_LIMIT_BW_MB * 100, 100), 2) if RENDER_LIMIT_BW_MB else 0
+    mem_pct = round(min(mem_mb / RENDER_LIMIT_MEM_MB * 100, 100), 2) if RENDER_LIMIT_MEM_MB else 0
+
+    return {
+        "bandwidth": {
+            "used_mb": round(total_bw_mb, 2),
+            "limit_mb": RENDER_LIMIT_BW_MB,
+            "percent": bw_pct,
+        },
+        "memory": {
+            "used_mb": round(mem_mb, 2),
+            "limit_mb": RENDER_LIMIT_MEM_MB,
+            "percent": mem_pct,
+        },
+        "memory_sample_time": latest_ts,
+        "updated_at": now_str(8),
+    }
 
 
 STATE = {
@@ -547,7 +636,6 @@ def api_set_config():
                   "sidebar_collapsed", "maintenance_windows"):
             if k in data:
                 cfg[k] = data[k]
-        # Bark 清洗
         cleaned = []
         for bk in cfg.get("bark_keys", []):
             if isinstance(bk, str):
@@ -557,7 +645,6 @@ def api_set_config():
                 continue
             cleaned.append({"key": key, "enabled": bool(bk.get("enabled", True))})
         cfg["bark_keys"] = cleaned
-        # 服务器清洗
         servers_clean = []
         for s in cfg.get("servers", []):
             name = (s.get("name") or "").strip()
@@ -575,7 +662,6 @@ def api_set_config():
                 "enabled": bool(s.get("enabled", True)),
             })
         cfg["servers"] = servers_clean
-        # 维护时段迁移
         cfg["maintenance_windows"] = migrate_maintenance_windows(cfg.get("maintenance_windows"))
         save_config(cfg)
     return jsonify({"ok": True, "config": cfg})
@@ -659,6 +745,27 @@ def api_clear_logs():
             except Exception:
                 pass
     return jsonify({"ok": True})
+
+
+@app.route("/api/render_resource")
+def api_render_resource():
+    """Render 出站流量 + 内存占用，10 分钟缓存"""
+    now_ts = time.time()
+    with _render_lock:
+        if _render_cache["data"] is not None and now_ts < _render_cache["expire"]:
+            return jsonify(_render_cache["data"])
+    try:
+        data = fetch_render_metrics()
+        with _render_lock:
+            _render_cache["data"] = data
+            _render_cache["expire"] = now_ts + RENDER_CACHE_SECONDS
+        return jsonify(data)
+    except Exception as e:
+        # 有旧缓存就返回旧数据
+        with _render_lock:
+            if _render_cache["data"] is not None:
+                return jsonify(_render_cache["data"])
+        return jsonify({"error": str(e)}), 500
 
 
 restore_logs_from_file()

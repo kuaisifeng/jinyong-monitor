@@ -128,6 +128,60 @@
   .sidebar-content { padding: 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .sidebar.collapsed .sidebar-content { display: none; }
 
+  /* ============ 侧边栏底部资源监控面板 ============ */
+  .sidebar-footer {
+    padding: 12px 16px 14px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(77,158,255,0.03) 0%, rgba(0,0,0,0) 100%);
+    flex-shrink: 0;
+  }
+  .sidebar.collapsed .sidebar-footer { display: none; }
+  .resource-item { margin-bottom: 10px; }
+  .resource-item:last-child { margin-bottom: 0; }
+  .resource-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--text-dim);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .resource-label .r-name { color: var(--text-dim); }
+  .resource-label .r-value {
+    color: var(--text);
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .resource-bar {
+    height: 6px; background: var(--bg-input);
+    border-radius: 3px; overflow: hidden;
+    border: 1px solid rgba(35,42,61,0.8);
+  }
+  .resource-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4d9eff, #7c5cff);
+    border-radius: 3px;
+    transition: width 0.5s ease, background 0.3s ease;
+    width: 0%;
+  }
+  .resource-bar-fill.warn {
+    background: linear-gradient(90deg, #ffb74d, #ff9800);
+  }
+  .resource-bar-fill.danger {
+    background: linear-gradient(90deg, #f87171, #d32f2f);
+  }
+  .resource-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-mute);
+  }
+  .resource-error {
+    color: var(--offline);
+    font-size: 10px;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+
   .field { margin-bottom: 14px; }
   .field-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -171,8 +225,6 @@
   }
   .check-item:hover { background: var(--bg-card-hover); }
 
-  /* ============ 自定义高对比度复选框 ============ */
-  /* 服务器列表 / Bark 密钥 / 维护时段 共用 */
   .check-item input[type="checkbox"],
   .maint-days input[type="checkbox"] {
     -webkit-appearance: none;
@@ -278,7 +330,6 @@
 
   .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
-  /* ============ 维护时段编辑器 ============ */
   .maint-rule {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -622,6 +673,26 @@
       <button class="btn" id="clearTimeoutLogBtn">🗑 清空超时日志</button>
 
     </div>
+
+    <!-- 底部：Render 资源监控面板 -->
+    <div class="sidebar-footer">
+      <div class="resource-item">
+        <div class="resource-label">
+          <span class="r-name">📡 Render 本月流量</span>
+          <span class="r-value" id="bwValue">-- / -- MB</span>
+        </div>
+        <div class="resource-bar"><div class="resource-bar-fill" id="bwBar"></div></div>
+        <div class="resource-meta" id="bwMeta">加载中…</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span class="r-name">💾 Render 内存占用</span>
+          <span class="r-value" id="memValue">-- / -- MB</span>
+        </div>
+        <div class="resource-bar"><div class="resource-bar-fill" id="memBar"></div></div>
+        <div class="resource-meta" id="memMeta">加载中…</div>
+      </div>
+    </div>
   </aside>
 
   <section class="content">
@@ -720,6 +791,15 @@
     </div>
 
     <div class="readme-section">
+      <h4>📊 Render 资源监控</h4>
+      <ul>
+        <li>左下角实时显示 Render 本月出站流量 + 当前内存占用</li>
+        <li>数据来自 Render 官方 API，与 Render 后台面板一致</li>
+        <li>后端每 10 分钟缓存一次，页面每分钟自动刷新</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
       <h4>📋 日志说明</h4>
       <ul>
         <li>实时检测日志：最多保留 <b>100 条</b></li>
@@ -783,10 +863,10 @@ const state = {
 const POLL_STATUS = 2000;
 const POLL_LOGS = 3000;
 const POLL_CONFIG = 5000;
+const POLL_RESOURCE = 60000;  // 资源监控 60 秒刷新一次
 const MAX_RTT_HISTORY = 30;
 const DEFAULT_PORT = 6732;
 
-// 固定维护规则模板
 const FIXED_MAINT_RULES = [
   { allowedDays: [1, 2, 3, 4, 5], title: "工作日", defaultStart: "07:00", defaultEnd: "07:30" },
   { allowedDays: [6, 7], title: "周末", defaultStart: "09:30", defaultEnd: "10:00" },
@@ -898,7 +978,7 @@ function parseServersText(text) {
   return servers;
 }
 
-// ---------- 维护时段规范化（固定 2 条） ----------
+// ---------- 维护时段规范化 ----------
 function normalizeMaintenance(cfgWindows) {
   const rules = FIXED_MAINT_RULES.map((tpl) => ({
     days: tpl.allowedDays.slice(),
@@ -1380,6 +1460,45 @@ filterInput.addEventListener("input", () => {
   renderTable();
 });
 
+// ---------- Render 资源监控 ----------
+function setBar(fillEl, pct) {
+  fillEl.style.width = Math.min(pct, 100) + "%";
+  fillEl.classList.remove("warn", "danger");
+  if (pct >= 85) fillEl.classList.add("danger");
+  else if (pct >= 60) fillEl.classList.add("warn");
+}
+
+async function fetchRenderResource() {
+  if (!state.backendUrl) return;
+  try {
+    const r = await fetch(apiUrl("/api/render_resource"));
+    const data = await r.json();
+
+    if (data.error) {
+      $("bwMeta").innerHTML = `<span class="resource-error">${escapeHtml(data.error)}</span>`;
+      $("memMeta").innerHTML = `<span class="resource-error">${escapeHtml(data.error)}</span>`;
+      $("bwValue").textContent = "-- / -- MB";
+      $("memValue").textContent = "-- / -- MB";
+      return;
+    }
+
+    const bw = data.bandwidth || {};
+    const mem = data.memory || {};
+
+    $("bwValue").textContent = `${bw.used_mb ?? 0} / ${bw.limit_mb ?? 5120} MB`;
+    setBar($("bwBar"), bw.percent ?? 0);
+    $("bwMeta").textContent = `已用 ${bw.percent ?? 0}% · 更新于 ${data.updated_at || "--"}`;
+
+    $("memValue").textContent = `${mem.used_mb ?? 0} / ${mem.limit_mb ?? 512} MB`;
+    setBar($("memBar"), mem.percent ?? 0);
+    $("memMeta").textContent = `已用 ${mem.percent ?? 0}% · 采样 ${data.memory_sample_time || "--"}`;
+  } catch (e) {
+    console.warn("拉取 Render 资源失败：", e);
+    $("bwMeta").innerHTML = '<span class="resource-error">后端无响应</span>';
+    $("memMeta").innerHTML = '<span class="resource-error">后端无响应</span>';
+  }
+}
+
 // ---------- 拉取状态 ----------
 async function fetchStatus() {
   if (!state.backendUrl) return;
@@ -1605,10 +1724,12 @@ function init() {
   loadConfig(true);
   fetchStatus();
   fetchLogs();
+  fetchRenderResource();
 
   setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
   setInterval(() => { if (state.backendUrl) loadConfig(true); }, POLL_CONFIG);
+  setInterval(fetchRenderResource, POLL_RESOURCE);
 }
 
 init();
