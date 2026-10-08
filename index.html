@@ -27,7 +27,6 @@
     --cb-bg-hover: #202844;
     --cb-checked: #4d9eff;
     --cb-checked-glow: rgba(77,158,255,0.45);
-    /* 滚动条配色 */
     --scrollbar-track: rgba(13,18,32,0.5);
     --scrollbar-thumb: #2a3350;
     --scrollbar-thumb-hover: #3a4570;
@@ -35,16 +34,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   /* ============ 全局深色滚动条 ============ */
-  /* Firefox */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
-  /* Webkit (Chrome / Safari / Edge) */
-  *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
   *::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
     border-radius: 4px;
@@ -54,12 +48,8 @@
     border-radius: 4px;
     transition: background 0.2s;
   }
-  *::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
-  }
-  *::-webkit-scrollbar-corner {
-    background: transparent;
-  }
+  *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+  *::-webkit-scrollbar-corner { background: transparent; }
 
   html, body {
     height: 100%; background: var(--bg); color: var(--text);
@@ -160,7 +150,6 @@
   .sidebar-content { padding: 16px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .sidebar.collapsed .sidebar-content { display: none; }
 
-  /* ============ 侧边栏底部资源监控面板 ============ */
   .sidebar-footer {
     padding: 12px 16px 14px;
     border-top: 1px solid var(--border);
@@ -328,7 +317,7 @@
     padding: 16px; font-size: 12px;
   }
   .btn-mini {
-    padding: 6px 8px;
+    padding: 6px 10px;
     border: 1px solid var(--border); background: transparent;
     color: var(--text-dim); font-size: 11px; border-radius: 6px;
     cursor: pointer; transition: all 0.2s;
@@ -336,6 +325,7 @@
     -webkit-appearance: none;
     touch-action: manipulation;
     min-height: 30px;
+    white-space: nowrap;
   }
   .btn-mini:hover { color: var(--text); border-color: var(--accent); }
   .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
@@ -368,23 +358,27 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .ntfy-actions {
-    display: flex; gap: 6px; margin-bottom: 8px;
+    display: flex; gap: 6px;
+    flex-wrap: wrap;
   }
   .ntfy-actions .btn-mini {
-    flex: 1; text-align: center;
+    flex: 1 1 calc(33.33% - 4px);
+    min-width: 80px;
+    text-align: center;
     text-decoration: none;
     display: flex; align-items: center; justify-content: center;
-    padding: 6px 4px;
+    padding: 7px 4px;
     font-size: 11px;
-    white-space: nowrap;
   }
   .ntfy-actions a.btn-mini { color: var(--text-dim); }
   .ntfy-actions a.btn-mini:hover { color: var(--accent); border-color: var(--accent); }
   .ntfy-tip {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-mute);
-    line-height: 1.5;
+    line-height: 1.65;
+    margin-top: 8px;
   }
+  .ntfy-tip b { color: var(--text-dim); font-weight: 600; }
 
   .btn {
     width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
@@ -447,6 +441,8 @@
   .maint-times {
     display: flex; align-items: center; gap: 10px;
   }
+
+  /* 时间选择器 —— 深色主题适配 */
   .maint-times input[type="time"] {
     flex: 1;
     background: var(--bg-card);
@@ -457,11 +453,25 @@
     font-size: 13px;
     font-family: "Consolas", "Monaco", monospace;
     -webkit-appearance: none;
+    appearance: none;
     outline: none;
+    color-scheme: dark;   /* 让浏览器原生控件用深色主题 */
   }
   .maint-times input[type="time"]:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
+  }
+  /* 时钟图标：强制改成亮色（Android Chrome / Edge 生效） */
+  .maint-times input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0) invert(1) opacity(0.75);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .maint-times input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    filter: brightness(0) invert(1) opacity(1);
+    background: rgba(77,158,255,0.15);
   }
   .maint-times span { color: var(--text-mute); font-size: 12px; }
 
@@ -622,6 +632,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ========= iOS / Android 移动端适配 ========= */
   @media (max-width: 900px) {
     .topbar { padding: 0 8px; gap: 6px; height: 52px; }
     .topbar-notice { display: none; }
@@ -653,6 +664,24 @@
     .maint-days input[type="checkbox"]:checked::after {
       left: 5px; top: 1px;
       width: 5px; height: 10px;
+    }
+
+    /* 移动端 Ntfy 按钮：小屏自动换行 */
+    .ntfy-actions .btn-mini {
+      flex: 1 1 calc(50% - 3px);
+    }
+
+    /* 移动端时间选择器：iOS 会用原生滚轮，Android 时钟图标亮色 */
+    .maint-times input[type="time"] {
+      padding: 8px 8px;
+      font-size: 14px;
+    }
+  }
+
+  /* 超小屏（<360px）：Ntfy 按钮一行一个 */
+  @media (max-width: 360px) {
+    .ntfy-actions .btn-mini {
+      flex: 1 1 100%;
     }
   }
 </style>
@@ -709,28 +738,29 @@
       <!-- Ntfy 推送 -->
       <div class="field">
         <div class="field-header">
-          <label>Ntfy 推送订阅 <span class="badge">一键订阅</span></label>
+          <label>Ntfy 推送订阅 <span class="badge">手机订阅</span></label>
         </div>
         <div class="ntfy-box">
           <div class="ntfy-topic-row">
-            <span class="ntfy-label">主题</span>
+            <span class="ntfy-label">频道</span>
             <span class="ntfy-topic" id="ntfyTopic">jinyong-server-alert</span>
           </div>
           <div class="ntfy-actions">
-            <button class="btn-mini" id="ntfyCopyBtn">📋 复制主题</button>
+            <button class="btn-mini" id="ntfyCopyBtn">📋 复制频道</button>
             <a class="btn-mini" id="ntfyApkBtn" href="ntfy.apk" download="ntfy.apk">📥 下载 APK</a>
             <a class="btn-mini" id="ntfyLatestBtn"
                href="https://github.com/binwiederhier/ntfy/releases/latest"
                target="_blank" rel="noopener">🔗 最新版</a>
           </div>
           <div class="ntfy-tip">
-            手机安装 Ntfy App 后，在 App 内订阅上述主题即可收到报警推送。
-            「下载 APK」为站内缓存版，可能非最新；「最新版」跳转官方 GitHub Releases。
+            📱 手机安装 Ntfy App → 点 + 号 → 输入上方频道名 → 订阅即可收到推送。<br>
+            🔕 <b>推送开关由 Ntfy 客户端控制</b>，不需要接收告警时，直接在 Ntfy 取消订阅即可。<br>
+            📥「下载 APK」为站内缓存版，可能非最新；「最新版」跳转官方 GitHub Releases。
           </div>
         </div>
       </div>
 
-      <!-- 维护时段（固定 2 条规则） -->
+      <!-- 免告警维护时段（固定 2 条规则） -->
       <div class="field">
         <div class="field-header">
           <label>免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
@@ -848,7 +878,7 @@
       <ul>
         <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
         <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
-        <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的主题</li>
+        <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的频道</li>
         <li>免告警维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
         <li>点「▶ 启动监控」开始探测</li>
@@ -883,10 +913,10 @@
     <div class="readme-section">
       <h4>📱 Ntfy 推送订阅</h4>
       <ul>
-        <li>Ntfy 是开源免费的推送服务，一个主题可多设备同时订阅</li>
-        <li>手机安装 Ntfy App → 订阅页面显示的主题 → 完成</li>
-        <li>无需配置密钥，订阅该主题的所有设备都会收到报警</li>
-        <li>不想接收推送时，在 App 内取消订阅即可</li>
+        <li>Ntfy 是开源免费的推送服务，一个频道可多设备同时订阅</li>
+        <li>手机安装 Ntfy App → 订阅页面显示的频道 → 完成</li>
+        <li>无需配置密钥，订阅该频道的所有设备都会收到报警</li>
+        <li><b>推送开关由 Ntfy 客户端控制</b>，不想接收时取消订阅即可</li>
         <li>APK 双下载入口：站内缓存版（走 Cloudflare）和官方 GitHub 最新版</li>
       </ul>
     </div>
@@ -999,6 +1029,11 @@ let barkEditMode = false;
 let serverEditMode = false;
 let maintEditMode = false;
 
+// 是否处于任意编辑态（用于暂停配置轮询，防止覆盖用户输入）
+function isAnyEditing() {
+  return serverEditMode || barkEditMode || maintEditMode;
+}
+
 function showLoading(show) { loading.classList.toggle("show", show); }
 function pad(n) { return String(n).padStart(2, "0"); }
 
@@ -1076,10 +1111,11 @@ $("ntfyCopyBtn").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(topic);
     const btn = $("ntfyCopyBtn");
+    const old = btn.textContent;
     btn.textContent = "✅ 已复制";
-    setTimeout(() => { btn.textContent = "📋 复制主题"; }, 1500);
+    setTimeout(() => { btn.textContent = old; }, 1500);
   } catch (e) {
-    showModal("复制失败", "浏览器拒绝访问剪贴板。\n主题：" + topic);
+    showModal("复制失败", "浏览器拒绝访问剪贴板。\n频道名：" + topic);
   }
 });
 
@@ -1129,7 +1165,7 @@ function normalizeMaintenance(cfgWindows) {
   return rules;
 }
 
-// ---------- 加载完整配置 ----------
+// ---------- 加载完整配置（含编辑态保护） ----------
 async function loadConfig(force = false) {
   if (!state.backendUrl) return;
   if (state.configLoaded && !force) return;
@@ -1138,6 +1174,7 @@ async function loadConfig(force = false) {
     const cfg = await r.json();
     state.config = cfg;
 
+    // 服务器列表：编辑态时不覆盖
     if (!serverEditMode) {
       const serverLines = (cfg.servers || [])
         .map((s) => `${s.name} ${s.ip} ${s.port || DEFAULT_PORT}`).join("\n");
@@ -1145,18 +1182,32 @@ async function loadConfig(force = false) {
       renderServerList();
     }
 
-    $("intervalInput").value = cfg.interval || 20;
-    $("alertStreakInput").value = cfg.alert_streak || 5;
-    $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
+    // 基础输入框：仅在未聚焦时覆盖，避免打断用户输入
+    const active = document.activeElement;
+    if (active !== $("intervalInput")) {
+      $("intervalInput").value = cfg.interval || 20;
+    }
+    if (active !== $("alertStreakInput")) {
+      $("alertStreakInput").value = cfg.alert_streak || 5;
+    }
+    if (active !== $("timezoneSelect")) {
+      $("timezoneSelect").value = String(cfg.timezone_offset ?? 8);
+    }
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
 
-    state.barkKeys = (cfg.bark_keys || []).map((b) => ({
-      key: b.key, enabled: b.enabled !== false
-    }));
-    renderBarkList();
+    // Bark：编辑态时不覆盖（关键修复）
+    if (!barkEditMode) {
+      state.barkKeys = (cfg.bark_keys || []).map((b) => ({
+        key: b.key, enabled: b.enabled !== false
+      }));
+      renderBarkList();
+    }
 
-    state.maintenanceWindows = normalizeMaintenance(cfg.maintenance_windows);
-    renderMaintenanceList();
+    // 维护时段：编辑态时不覆盖（关键修复）
+    if (!maintEditMode) {
+      state.maintenanceWindows = normalizeMaintenance(cfg.maintenance_windows);
+      renderMaintenanceList();
+    }
 
     state.configLoaded = true;
   } catch (e) {
@@ -1298,6 +1349,8 @@ $("serverEditToggle").addEventListener("click", async () => {
         state.config = data.config;
         serverEditMode = false;
         renderServerList();
+        state.configLoaded = false;
+        await loadConfig(true);
       } else {
         showModal("保存失败", data.msg || "未知错误");
       }
@@ -1636,7 +1689,6 @@ async function fetchStatus() {
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
 
-    // 同步 Ntfy 主题名（从后端获取，保证一致性）
     if (data.ntfy_topic && data.ntfy_topic !== state.ntfyTopic) {
       state.ntfyTopic = data.ntfy_topic;
       $("ntfyTopic").textContent = data.ntfy_topic;
@@ -1646,7 +1698,9 @@ async function fetchStatus() {
     maintBadge.classList.toggle("show", state.barkSuppressed);
 
     if (state.running !== wasRunning) {
-      await loadConfig(true);
+      if (!isAnyEditing()) {
+        await loadConfig(true);
+      }
       updateRunningState(state.running);
     }
 
@@ -1859,7 +1913,10 @@ function init() {
 
   setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
-  setInterval(() => { if (state.backendUrl) loadConfig(true); }, POLL_CONFIG);
+  // 配置轮询：编辑态时跳过，避免覆盖用户输入
+  setInterval(() => {
+    if (state.backendUrl && !isAnyEditing()) loadConfig(true);
+  }, POLL_CONFIG);
   setInterval(fetchRenderResource, POLL_RESOURCE);
 }
 

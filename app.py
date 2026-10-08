@@ -4,7 +4,6 @@ import time
 import os
 import json
 import requests
-from email.header import Header
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request
 
@@ -49,7 +48,6 @@ _render_cache = {"data": None, "expire": 0}
 _render_lock = threading.Lock()
 
 # ==================== Ntfy 推送配置 ====================
-# 硬编码主题名，可通过环境变量覆盖
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "jinyong-server-alert")
 NTFY_SERVER = "https://ntfy.sh"
 
@@ -432,29 +430,26 @@ def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, strea
 
 
 def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
-    """向 Ntfy 主题发送报警。中文标题使用 RFC 2047 编码。"""
+    """向 Ntfy 频道发送报警（JSON API，完美支持中文）"""
     if not NTFY_TOPIC:
         return False
-    title = f"⚠️ 服务器离线：{name}"
-    try:
-        encoded_title = Header(title, "utf-8").encode()
-    except Exception:
-        encoded_title = "Server Offline"
-    body = (
-        f"服务器：{name}\n"
-        f"IP：{ip}:{port}\n"
-        f"首次超时：{first_timeout_time}\n"
-        f"连续超时：{streak} 次"
-    )
+    payload = {
+        "topic": NTFY_TOPIC,
+        "title": f"⚠️ 服务器离线：{name}",
+        "message": (
+            f"服务器：{name}\n"
+            f"IP：{ip}:{port}\n"
+            f"首次超时：{first_timeout_time}\n"
+            f"连续超时：{streak} 次"
+        ),
+        "priority": 5,
+        "tags": ["warning", "skull"],
+    }
     try:
         r = requests.post(
-            f"{NTFY_SERVER}/{NTFY_TOPIC}",
-            data=body.encode("utf-8"),
-            headers={
-                "Title": encoded_title,
-                "Priority": "urgent",
-                "Tags": "warning,skull",
-            },
+            NTFY_SERVER,
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
             timeout=5,
         )
         return r.status_code == 200
