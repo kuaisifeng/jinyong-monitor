@@ -208,6 +208,9 @@
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 6px;
   }
+  .field-header-actions {
+    display: flex; align-items: center; gap: 6px;
+  }
   .field label {
     display: flex; align-items: center; gap: 6px;
     font-size: 12px; color: var(--text-dim); font-weight: 500;
@@ -331,6 +334,21 @@
   .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
   .btn-mini.active { background: rgba(77,158,255,0.15); color: var(--accent); border-color: var(--accent); }
 
+  /* 帮助按钮（圆形问号） */
+  .btn-help {
+    width: 26px; height: 26px;
+    min-height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-help:hover { color: var(--accent); border-color: var(--accent); background: rgba(77,158,255,0.1); }
+
   /* ============ Ntfy 模块 ============ */
   .ntfy-box {
     background: var(--bg-input);
@@ -372,13 +390,6 @@
   }
   .ntfy-actions a.btn-mini { color: var(--text-dim); }
   .ntfy-actions a.btn-mini:hover { color: var(--accent); border-color: var(--accent); }
-  .ntfy-tip {
-    font-size: 11px;
-    color: var(--text-mute);
-    line-height: 1.65;
-    margin-top: 8px;
-  }
-  .ntfy-tip b { color: var(--text-dim); font-weight: 600; }
 
   .btn {
     width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
@@ -441,8 +452,6 @@
   .maint-times {
     display: flex; align-items: center; gap: 10px;
   }
-
-  /* 时间选择器 —— 深色主题适配 */
   .maint-times input[type="time"] {
     flex: 1;
     background: var(--bg-card);
@@ -455,13 +464,12 @@
     -webkit-appearance: none;
     appearance: none;
     outline: none;
-    color-scheme: dark;   /* 让浏览器原生控件用深色主题 */
+    color-scheme: dark;
   }
   .maint-times input[type="time"]:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
   }
-  /* 时钟图标：强制改成亮色（Android Chrome / Edge 生效） */
   .maint-times input[type="time"]::-webkit-calendar-picker-indicator {
     filter: brightness(0) invert(1) opacity(0.75);
     cursor: pointer;
@@ -666,19 +674,15 @@
       width: 5px; height: 10px;
     }
 
-    /* 移动端 Ntfy 按钮：小屏自动换行 */
     .ntfy-actions .btn-mini {
       flex: 1 1 calc(50% - 3px);
     }
-
-    /* 移动端时间选择器：iOS 会用原生滚轮，Android 时钟图标亮色 */
     .maint-times input[type="time"] {
       padding: 8px 8px;
       font-size: 14px;
     }
   }
 
-  /* 超小屏（<360px）：Ntfy 按钮一行一个 */
   @media (max-width: 360px) {
     .ntfy-actions .btn-mini {
       flex: 1 1 100%;
@@ -728,8 +732,11 @@
       <!-- Bark 密钥 -->
       <div class="field">
         <div class="field-header">
-          <label>Bark 密钥 <span class="badge" id="barkModeBadge">视图模式</span></label>
-          <button class="btn-mini" id="barkEditToggle">编辑</button>
+          <label>Bark 密钥 <span class="badge">iOS</span></label>
+          <div class="field-header-actions">
+            <button class="btn-mini btn-help" id="barkHelpBtn" title="Bark 使用说明">？</button>
+            <button class="btn-mini" id="barkEditToggle">编辑</button>
+          </div>
         </div>
         <div id="barkViewList" class="check-list" style="max-height:140px;"></div>
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
@@ -738,7 +745,10 @@
       <!-- Ntfy 推送 -->
       <div class="field">
         <div class="field-header">
-          <label>Ntfy 推送订阅 <span class="badge">手机订阅</span></label>
+          <label>Ntfy 推送订阅 <span class="badge">Android</span></label>
+          <div class="field-header-actions">
+            <button class="btn-mini btn-help" id="ntfyHelpBtn" title="Ntfy 使用说明">？</button>
+          </div>
         </div>
         <div class="ntfy-box">
           <div class="ntfy-topic-row">
@@ -751,11 +761,6 @@
             <a class="btn-mini" id="ntfyLatestBtn"
                href="https://github.com/binwiederhier/ntfy/releases/latest"
                target="_blank" rel="noopener">🔗 最新版</a>
-          </div>
-          <div class="ntfy-tip">
-            📱 手机安装 Ntfy App → 点 + 号 → 输入上方频道名 → 订阅即可收到推送。<br>
-            🔕 <b>推送开关由 Ntfy 客户端控制</b>，不需要接收告警时，直接在 Ntfy 取消订阅即可。<br>
-            📥「下载 APK」为站内缓存版，可能非最新；「最新版」跳转官方 GitHub Releases。
           </div>
         </div>
       </div>
@@ -869,6 +874,7 @@
   </div>
 </div>
 
+<!-- 全局 README -->
 <div class="modal-mask" id="readmeMask">
   <div class="modal" style="max-width:580px;">
     <h3 class="accent">📖 使用说明</h3>
@@ -890,7 +896,7 @@
       <ul>
         <li>后端地址已写死在页面，无需手动填写</li>
         <li>所有状态（服务器、勾选、侧边栏折叠、Bark 密钥、维护时段）都保存在后端</li>
-        <li>任意设备操作后，其他设备 2 秒内自动同步</li>
+        <li>任意设备操作后，其他设备 5 秒内自动同步</li>
       </ul>
     </div>
 
@@ -898,35 +904,6 @@
       <h4>🛰 探针原理</h4>
       <ul>
         <li>服务器正确解密并返回 payload[0]=0x01 才算「在线」</li>
-      </ul>
-    </div>
-
-    <div class="readme-section">
-      <h4>🔔 Bark 报警</h4>
-      <ul>
-        <li>连续超时达到阈值（默认 5 次）自动推送到所有勾选的密钥</li>
-        <li>报警内容含服务器名、IP、首次超时时间</li>
-        <li>critical 级别 + alarm 铃声 + 满音量，绕过静音模式</li>
-      </ul>
-    </div>
-
-    <div class="readme-section">
-      <h4>📱 Ntfy 推送订阅</h4>
-      <ul>
-        <li>Ntfy 是开源免费的推送服务，一个频道可多设备同时订阅</li>
-        <li>手机安装 Ntfy App → 订阅页面显示的频道 → 完成</li>
-        <li>无需配置密钥，订阅该频道的所有设备都会收到报警</li>
-        <li><b>推送开关由 Ntfy 客户端控制</b>，不想接收时取消订阅即可</li>
-        <li>APK 双下载入口：站内缓存版（走 Cloudflare）和官方 GitHub 最新版</li>
-      </ul>
-    </div>
-
-    <div class="readme-section">
-      <h4>🔧 免告警维护时段</h4>
-      <ul>
-        <li>可视化勾选星期 + 时分选择器，无需手写格式</li>
-        <li>维护时段内：日志照常记录，但不会触发 Bark / Ntfy 推送</li>
-        <li>默认预填：工作日 07:00-07:30、周末 09:30-10:00</li>
       </ul>
     </div>
 
@@ -972,6 +949,101 @@
   </div>
 </div>
 
+<!-- Bark 帮助弹窗 -->
+<div class="modal-mask" id="barkHelpMask">
+  <div class="modal" style="max-width:560px;">
+    <h3 class="accent">📱 Bark 推送使用说明（iOS）</h3>
+
+    <div class="readme-section">
+      <h4>📥 安装 Bark</h4>
+      <ul>
+        <li>iOS App Store 搜索「Bark」下载安装</li>
+        <li>Bark 是一款开源免费的 iOS 推送工具</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔑 获取 device_key</h4>
+      <ul>
+        <li>打开 Bark App，首页会显示你的专属推送 URL，形如：<code>https://api.day.app/xxxxxxxxxx</code></li>
+        <li>URL 末尾那段字符串就是 device_key</li>
+        <li>也可以点 App 里的「复制」按钮一键复制</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>📝 填入监控面板</h4>
+      <ul>
+        <li>点「Bark 密钥」旁的「编辑」按钮进入编辑态</li>
+        <li>每行粘贴一个 device_key，多个设备可填多行</li>
+        <li>保存后，每条密钥前面会出现复选框，可单独勾选 / 取消</li>
+        <li>勾选 = 接收推送，取消勾选 = 不接收</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔔 报警触发条件</h4>
+      <ul>
+        <li>服务器连续超时达到阈值（默认 5 次）才会推送</li>
+        <li>报警内容包含服务器名、IP、首次超时时间、连续超时次数</li>
+        <li>critical 级别 + alarm 铃声，绕过静音模式，确保能收到</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button id="barkHelpClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ntfy 帮助弹窗 -->
+<div class="modal-mask" id="ntfyHelpMask">
+  <div class="modal" style="max-width:560px;">
+    <h3 class="accent">📱 Ntfy 推送使用说明（Android）</h3>
+
+    <div class="readme-section">
+      <h4>📥 安装 Ntfy</h4>
+      <ul>
+        <li>点击 Ntfy 模块下方的「📥 下载 APK」下载站内缓存版</li>
+        <li>或点「🔗 最新版」跳转官方 GitHub Releases 下载最新版</li>
+        <li>Ntfy 是一款开源免费的推送工具，安装包只有约 8MB</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>📡 订阅频道</h4>
+      <ul>
+        <li>打开 Ntfy App → 点右下角的「+」号</li>
+        <li>输入频道名：<code>jinyong-server-alert</code>（也可点页面上「📋 复制频道」一键复制）</li>
+        <li>点击「Subscribe」完成订阅</li>
+        <li>订阅后即可收到推送，无需其他配置</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔕 关闭推送</h4>
+      <ul>
+        <li><b>推送开关由 Ntfy 客户端控制</b></li>
+        <li>不需要接收告警时，直接在 Ntfy App 内取消订阅该频道即可</li>
+        <li>无需在监控面板做任何设置</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>💡 国产手机注意事项</h4>
+      <ul>
+        <li>小米 / 华为 / OPPO / vivo 等系统可能杀后台，请把 Ntfy 加入<b>电池白名单</b></li>
+        <li>确保 Ntfy 有「通知权限」和「自启动权限」</li>
+        <li>如果收不到推送，试试把 Ntfy 长按锁定在多任务界面</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button id="ntfyHelpClose">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="loading" id="loading"></div>
 
 <script>
@@ -999,12 +1071,14 @@ const state = {
   maintenanceWindows: [],
   barkSuppressed: false,
   ntfyTopic: "jinyong-server-alert",
+  lastRenderedLines: [],
+  lastRenderTab: "",
 };
 
-const POLL_STATUS = 2000;
-const POLL_LOGS = 3000;
-const POLL_CONFIG = 5000;
-const POLL_RESOURCE = 60000;
+const POLL_STATUS = 5000;      // 5 秒
+const POLL_LOGS = 5000;        // 5 秒
+const POLL_CONFIG = 15000;     // 15 秒
+const POLL_RESOURCE = 60000;   // 60 秒
 const MAX_RTT_HISTORY = 30;
 const DEFAULT_PORT = 6732;
 
@@ -1029,7 +1103,6 @@ let barkEditMode = false;
 let serverEditMode = false;
 let maintEditMode = false;
 
-// 是否处于任意编辑态（用于暂停配置轮询，防止覆盖用户输入）
 function isAnyEditing() {
   return serverEditMode || barkEditMode || maintEditMode;
 }
@@ -1087,6 +1160,7 @@ $("collapseBtn").addEventListener("touchend", (e) => {
   setSidebarCollapsed(next, true);
 });
 
+// ---------- 通用弹窗 ----------
 function showModal(title, body, onClose) {
   $("modalTitle").textContent = title;
   $("modalBody").textContent = body;
@@ -1103,6 +1177,13 @@ $("modalClose").addEventListener("click", () => $("modalMask").classList.remove(
 
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
+
+// ---------- Bark / Ntfy 帮助弹窗 ----------
+$("barkHelpBtn").addEventListener("click", () => $("barkHelpMask").classList.add("show"));
+$("barkHelpClose").addEventListener("click", () => $("barkHelpMask").classList.remove("show"));
+
+$("ntfyHelpBtn").addEventListener("click", () => $("ntfyHelpMask").classList.add("show"));
+$("ntfyHelpClose").addEventListener("click", () => $("ntfyHelpMask").classList.remove("show"));
 
 // ---------- Ntfy 一键复制 ----------
 $("ntfyCopyBtn").addEventListener("click", async () => {
@@ -1165,7 +1246,7 @@ function normalizeMaintenance(cfgWindows) {
   return rules;
 }
 
-// ---------- 加载完整配置（含编辑态保护） ----------
+// ---------- 加载完整配置 ----------
 async function loadConfig(force = false) {
   if (!state.backendUrl) return;
   if (state.configLoaded && !force) return;
@@ -1174,7 +1255,6 @@ async function loadConfig(force = false) {
     const cfg = await r.json();
     state.config = cfg;
 
-    // 服务器列表：编辑态时不覆盖
     if (!serverEditMode) {
       const serverLines = (cfg.servers || [])
         .map((s) => `${s.name} ${s.ip} ${s.port || DEFAULT_PORT}`).join("\n");
@@ -1182,7 +1262,6 @@ async function loadConfig(force = false) {
       renderServerList();
     }
 
-    // 基础输入框：仅在未聚焦时覆盖，避免打断用户输入
     const active = document.activeElement;
     if (active !== $("intervalInput")) {
       $("intervalInput").value = cfg.interval || 20;
@@ -1195,7 +1274,6 @@ async function loadConfig(force = false) {
     }
     state.timezoneOffset = parseInt(cfg.timezone_offset ?? 8);
 
-    // Bark：编辑态时不覆盖（关键修复）
     if (!barkEditMode) {
       state.barkKeys = (cfg.bark_keys || []).map((b) => ({
         key: b.key, enabled: b.enabled !== false
@@ -1203,7 +1281,6 @@ async function loadConfig(force = false) {
       renderBarkList();
     }
 
-    // 维护时段：编辑态时不覆盖（关键修复）
     if (!maintEditMode) {
       state.maintenanceWindows = normalizeMaintenance(cfg.maintenance_windows);
       renderMaintenanceList();
@@ -1349,8 +1426,6 @@ $("serverEditToggle").addEventListener("click", async () => {
         state.config = data.config;
         serverEditMode = false;
         renderServerList();
-        state.configLoaded = false;
-        await loadConfig(true);
       } else {
         showModal("保存失败", data.msg || "未知错误");
       }
@@ -1367,7 +1442,6 @@ function renderBarkList() {
   const list = $("barkViewList");
   const ta = $("barkEditTextarea");
   const toggle = $("barkEditToggle");
-  const badge = $("barkModeBadge");
 
   if (barkEditMode) {
     list.style.display = "none";
@@ -1375,13 +1449,11 @@ function renderBarkList() {
     ta.value = state.barkKeys.map((b) => b.key).join("\n");
     toggle.textContent = "完成";
     toggle.classList.add("active");
-    badge.textContent = "编辑模式";
   } else {
     list.style.display = "block";
     ta.style.display = "none";
     toggle.textContent = "编辑";
     toggle.classList.remove("active");
-    badge.textContent = "视图模式";
 
     if (!state.barkKeys.length) {
       list.innerHTML = '<div class="check-empty">暂无密钥，点击“编辑”添加</div>';
@@ -1601,8 +1673,14 @@ async function clearLogs(which) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ which }),
     });
-    if (which === "check" || which === "all") state.logs = [];
-    if (which === "timeout" || which === "all") state.timeoutLogs = [];
+    if (which === "check" || which === "all") {
+      state.logs = [];
+      state.lastRenderedLines = [];
+    }
+    if (which === "timeout" || which === "all") {
+      state.timeoutLogs = [];
+      state.lastRenderedLines = [];
+    }
     renderLogs();
   } catch (e) { console.warn(e); }
 }
@@ -1629,6 +1707,8 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
     state.currentTab = tab.dataset.tab;
+    state.lastRenderedLines = [];
+    state.lastRenderTab = "";
     renderLogs();
   });
 });
@@ -1776,6 +1856,7 @@ async function fetchLogs() {
   } catch (e) { console.warn("拉取日志失败：", e); }
 }
 
+// ---------- 增量渲染表格 ----------
 function renderTable() {
   let list = state.results;
   if (state.filter) {
@@ -1790,37 +1871,83 @@ function renderTable() {
   const offline = total - online;
   statsText.innerHTML = `共 ${total} 台 · <b>在线 ${online}</b> · <i>离线 ${offline}</i>`;
 
+  // 处理空数据
   if (!list.length) {
-    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#5a6478;">暂无数据</td></tr>';
+    // 清掉所有数据行
+    tableBody.querySelectorAll("tr[data-name]").forEach((tr) => tr.remove());
+    if (!tableBody.querySelector("tr:not([data-name])")) {
+      tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#5a6478;">暂无数据</td></tr>';
+    }
     return;
   }
 
-  tableBody.innerHTML = list.map((r) => {
-    const statusClass = r.ok ? "online" : "offline";
-    const statusText = r.ok ? "在线" : "离线";
-    const streakClass = r.streak === 0 ? "zero" : r.streak >= 5 ? "high" : "low";
-    const rtt = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
-    const totalMs = r.total_ms.toFixed(1) + " ms";
-    const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
-    return `
-      <tr>
-        <td><div class="status-cell ${statusClass}"><span class="status-dot ${statusClass}"></span>${statusText}</div></td>
-        <td>${escapeHtml(r.name)}</td>
-        <td class="mono">${r.ip}</td>
-        <td class="mono">${r.port || DEFAULT_PORT}</td>
-        <td class="mono">${rtt}</td>
-        <td class="mono">${totalMs}</td>
-        <td><span class="streak-badge ${streakClass}">${r.streak}</span></td>
-        <td class="err-text">${escapeHtml(r.err || "")}</td>
-        <td><canvas class="sparkline" id="${sparkId}" width="80" height="24"></canvas></td>
-      </tr>
-    `;
-  }).join("");
+  // 清掉"暂无数据"占位行
+  tableBody.querySelectorAll("tr:not([data-name])").forEach((tr) => tr.remove());
+
+  // 已有行索引
+  const existingRows = {};
+  tableBody.querySelectorAll("tr[data-name]").forEach((tr) => {
+    existingRows[tr.dataset.name] = tr;
+  });
+
+  const seen = new Set();
 
   list.forEach((r) => {
-    const sparkId = "spark_" + r.name.replace(/[^a-zA-Z0-9]/g, "_");
-    const canvas = document.getElementById(sparkId);
-    if (canvas) drawSparkline(canvas, state.rttHistory[r.name] || []);
+    seen.add(r.name);
+    let tr = existingRows[r.name];
+    if (!tr) {
+      tr = document.createElement("tr");
+      tr.dataset.name = r.name;
+      tr.innerHTML = `
+        <td><div class="status-cell"></div></td>
+        <td class="name-cell"></td>
+        <td class="mono ip-cell"></td>
+        <td class="mono port-cell"></td>
+        <td class="mono rtt-cell"></td>
+        <td class="mono total-cell"></td>
+        <td><span class="streak-badge"></span></td>
+        <td class="err-text"></td>
+        <td><canvas class="sparkline" width="80" height="24"></canvas></td>
+      `;
+    }
+
+    const statusClass = r.ok ? "online" : "offline";
+    const statusText = r.ok ? "在线" : "离线";
+    const statusCell = tr.querySelector(".status-cell");
+    statusCell.className = `status-cell ${statusClass}`;
+    statusCell.innerHTML = `<span class="status-dot ${statusClass}"></span>${statusText}`;
+
+    tr.querySelector(".name-cell").textContent = r.name;
+    tr.querySelector(".ip-cell").textContent = r.ip;
+    tr.querySelector(".port-cell").textContent = r.port || DEFAULT_PORT;
+    tr.querySelector(".rtt-cell").textContent = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
+    tr.querySelector(".total-cell").textContent = r.total_ms.toFixed(1) + " ms";
+
+    const streakClass = r.streak === 0 ? "zero" : r.streak >= 5 ? "high" : "low";
+    const streakBadge = tr.querySelector(".streak-badge");
+    streakBadge.className = `streak-badge ${streakClass}`;
+    streakBadge.textContent = r.streak;
+
+    tr.querySelector(".err-text").textContent = r.err || "";
+
+    // Sparkline 只在数据变化时重绘
+    const canvas = tr.querySelector(".sparkline");
+    const rttHistory = state.rttHistory[r.name] || [];
+    const hash = rttHistory.join(",");
+    if (canvas.dataset.hash !== hash) {
+      canvas.dataset.hash = hash;
+      drawSparkline(canvas, rttHistory);
+    }
+
+    // 移动行以保持顺序
+    tableBody.appendChild(tr);
+  });
+
+  // 删除不再存在的行
+  Object.keys(existingRows).forEach((name) => {
+    if (!seen.has(name)) {
+      existingRows[name].remove();
+    }
   });
 }
 
@@ -1871,35 +1998,98 @@ function drawSparkline(canvas, values) {
   ctx.fill();
 }
 
+// ---------- 日志染色（合并正则） ----------
 function colorizeLogLine(line) {
-  let html = escapeHtml(line);
-  html = html.replace(/TCP 超时/g, "\u0001TCP\u0002");
-  html = html.replace(/无回包/g, "\u0001NOREPLY\u0002");
-  html = html.replace(/拒绝连接/g, "\u0001REFUSED\u0002");
-  html = html.replace(/回包非 F4 44/g, "\u0001BADPKT\u0002");
-  html = html.replace(/离线/g, "\u0001OFFLINE\u0002");
-  html = html.replace(/在线/g, "\u0001ONLINE\u0002");
-
-  html = html.replace(/\u0001TCP\u0002/g, '<span class="kw-red">TCP 超时</span>');
-  html = html.replace(/\u0001NOREPLY\u0002/g, '<span class="kw-red">无回包</span>');
-  html = html.replace(/\u0001REFUSED\u0002/g, '<span class="kw-red">拒绝连接</span>');
-  html = html.replace(/\u0001BADPKT\u0002/g, '<span class="kw-red">回包非 F4 44</span>');
-  html = html.replace(/\u0001OFFLINE\u0002/g, '<span class="kw-red">离线</span>');
-  html = html.replace(/\u0001ONLINE\u0002/g, '<span class="kw-green">在线</span>');
-  return html;
+  const html = escapeHtml(line);
+  return html.replace(
+    /TCP 超时|无回包|拒绝连接|连接被强制断开|回包非 F4 44|离线|在线/g,
+    (m) => {
+      if (m === "在线") return '<span class="kw-green">在线</span>';
+      return `<span class="kw-red">${m}</span>`;
+    }
+  );
 }
 
+// ---------- 日志渲染（增量追加） ----------
 function renderLogs() {
   const lines = state.currentTab === "check" ? state.logs : state.timeoutLogs;
+  const prev = state.lastRenderedLines || [];
+
+  // 空日志
   if (!lines.length) {
     logContent.textContent = "暂无日志...";
+    state.lastRenderedLines = [];
+    state.lastRenderTab = state.currentTab;
     return;
   }
-  const wasAtBottom = logContent.scrollTop + logContent.clientHeight >= logContent.scrollHeight - 20;
-  logContent.innerHTML = lines
-    .map((line) => `<span class="log-line">${colorizeLogLine(line)}</span>`)
-    .join("\n");
-  if (state.autoScroll && wasAtBottom) {
+
+  // 首次渲染 / 切换 tab：全量
+  if (!prev.length || state.lastRenderTab !== state.currentTab) {
+    renderLogsFull(lines);
+    state.lastRenderedLines = lines.slice();
+    state.lastRenderTab = state.currentTab;
+    return;
+  }
+
+  // 用旧列表的最后一条日志作为游标
+  const prevLast = prev[prev.length - 1];
+  const idx = lines.lastIndexOf(prevLast);
+
+  // 找不到旧日志（被清空或中间跳变）：全量
+  if (idx === -1) {
+    renderLogsFull(lines);
+    state.lastRenderedLines = lines.slice();
+    state.lastRenderTab = state.currentTab;
+    return;
+  }
+
+  // 没有新日志
+  if (idx === lines.length - 1) {
+    state.lastRenderedLines = lines.slice();
+    return;
+  }
+
+  // 有新日志
+  const newLines = lines.slice(idx + 1);
+  const domCount = logContent.querySelectorAll(".log-line").length;
+  const maxKeep = state.currentTab === "check" ? 300 : 1500;
+
+  if (domCount + newLines.length > maxKeep) {
+    // DOM 中累计太多，全量重绘
+    renderLogsFull(lines);
+  } else {
+    // 增量追加
+    const frag = document.createDocumentFragment();
+    newLines.forEach((line) => {
+      const span = document.createElement("span");
+      span.className = "log-line";
+      span.innerHTML = colorizeLogLine(line);
+      frag.appendChild(span);
+    });
+    logContent.appendChild(frag);
+
+    // 自动滚动
+    if (state.autoScroll) {
+      logContent.scrollTop = logContent.scrollHeight;
+    }
+  }
+
+  state.lastRenderedLines = lines.slice();
+  state.lastRenderTab = state.currentTab;
+}
+
+function renderLogsFull(lines) {
+  const frag = document.createDocumentFragment();
+  lines.forEach((line) => {
+    const span = document.createElement("span");
+    span.className = "log-line";
+    span.innerHTML = colorizeLogLine(line);
+    frag.appendChild(span);
+  });
+  logContent.innerHTML = "";
+  logContent.appendChild(frag);
+
+  if (state.autoScroll) {
     logContent.scrollTop = logContent.scrollHeight;
   }
 }
@@ -1913,7 +2103,6 @@ function init() {
 
   setInterval(fetchStatus, POLL_STATUS);
   setInterval(fetchLogs, POLL_LOGS);
-  // 配置轮询：编辑态时跳过，避免覆盖用户输入
   setInterval(() => {
     if (state.backendUrl && !isAnyEditing()) loadConfig(true);
   }, POLL_CONFIG);

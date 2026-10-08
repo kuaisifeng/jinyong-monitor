@@ -345,6 +345,7 @@ async def check_one(name, ip, port, timeout, sem):
         start = time.perf_counter()
         writer = None
         try:
+            # ---- 建连阶段 ----
             try:
                 reader, writer = await asyncio.wait_for(
                     asyncio.open_connection(ip, port), timeout=timeout
@@ -353,32 +354,43 @@ async def check_one(name, ip, port, timeout, sem):
                 return name, ip, port, False, 0.0, (time.perf_counter() - start) * 1000, "TCP 超时"
             except ConnectionRefusedError:
                 return name, ip, port, False, 0.0, (time.perf_counter() - start) * 1000, "拒绝连接"
+            except ConnectionResetError:
+                return name, ip, port, False, 0.0, (time.perf_counter() - start) * 1000, "连接被强制断开"
             except Exception as e:
                 return name, ip, port, False, 0.0, (time.perf_counter() - start) * 1000, str(e)
 
             rtt_ms = (time.perf_counter() - start) * 1000
-            writer.write(PROBE_CIPHER)
-            await writer.drain()
 
+            # ---- 发包 + 收包阶段 ----
             try:
-                resp = await asyncio.wait_for(reader.read(4096), timeout=timeout)
-            except asyncio.TimeoutError:
-                return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "无回包"
+                writer.write(PROBE_CIPHER)
+                await writer.drain()
 
-            if not resp:
-                return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "无回包"
+                try:
+                    resp = await asyncio.wait_for(reader.read(4096), timeout=timeout)
+                except asyncio.TimeoutError:
+                    return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "无回包"
+                except ConnectionResetError:
+                    return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "连接被强制断开"
 
-            dec = xor_decrypt(resp, XOR_KEY)
-            total_ms = (time.perf_counter() - start) * 1000
+                if not resp:
+                    return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "无回包"
 
-            if len(dec) >= 4 and dec[0] == 0xF4 and dec[1] == 0x44:
-                payload = dec[3:]
-                if len(payload) >= 1 and payload[0] == 0x01:
-                    return name, ip, port, True, rtt_ms, total_ms, ""
+                dec = xor_decrypt(resp, XOR_KEY)
+                total_ms = (time.perf_counter() - start) * 1000
+
+                if len(dec) >= 4 and dec[0] == 0xF4 and dec[1] == 0x44:
+                    payload = dec[3:]
+                    if len(payload) >= 1 and payload[0] == 0x01:
+                        return name, ip, port, True, rtt_ms, total_ms, ""
+                    else:
+                        return name, ip, port, False, rtt_ms, total_ms, f"payload[0]={payload[0]:02X}"
                 else:
-                    return name, ip, port, False, rtt_ms, total_ms, f"payload[0]={payload[0]:02X}"
-            else:
-                return name, ip, port, False, rtt_ms, total_ms, "回包非 F4 44"
+                    return name, ip, port, False, rtt_ms, total_ms, "回包非 F4 44"
+            except ConnectionResetError:
+                return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, "连接被强制断开"
+            except Exception as e:
+                return name, ip, port, False, rtt_ms, (time.perf_counter() - start) * 1000, str(e)
         except Exception as e:
             return name, ip, port, False, 0.0, (time.perf_counter() - start) * 1000, str(e)
         finally:
@@ -430,8 +442,9 @@ def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, strea
 
 
 def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
-    """向 Ntfy 频道发送报警（JSON API，完美支持中文）"""
+    """向 Ntfy 频道发送报警（JSON API + 详细日志）"""
     if not NTFY_TOPIC:
+        print("[Ntfy] 未配置 NTFY_TOPIC，跳过", flush=True)
         return False
     payload = {
         "topic": NTFY_TOPIC,
@@ -449,11 +462,19 @@ def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
         r = requests.post(
             NTFY_SERVER,
             data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            timeout=5,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "jinyong-monitor/1.0",
+            },
+            timeout=10,
+        )
+        print(
+            f"[Ntfy] HTTP {r.status_code} | topic={NTFY_TOPIC} | resp={r.text[:200]}",
+            flush=True,
         )
         return r.status_code == 200
-    except Exception:
+    except Exception as e:
+        print(f"[Ntfy] 发送异常: {type(e).__name__}: {e}", flush=True)
         return False
 
 
@@ -572,7 +593,6 @@ async def monitor_loop(initial_cfg):
                 if len(STATE["logs"]) > MAX_CHECK_LOG:
                     STATE["logs"] = STATE["logs"][-MAX_CHECK_LOG:]
 
-            # 同时触发 Bark + Ntfy 推送（非维护时段）
             for name, ip, port, first_t, streak in alerts_to_send:
                 await asyncio.to_thread(
                     send_bark_alerts_to_all, bark_keys, name, ip, port, first_t, streak
