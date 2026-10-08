@@ -30,10 +30,10 @@
     --scrollbar-track: rgba(13,18,32,0.5);
     --scrollbar-thumb: #2a3350;
     --scrollbar-thumb-hover: #3a4570;
+    --ctrl-height: 30px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  /* ============ 全局深色滚动条 ============ */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -207,6 +207,7 @@
   .field-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 6px;
+    gap: 8px;
   }
   .field-header-actions {
     display: flex; align-items: center; gap: 6px;
@@ -230,7 +231,8 @@
     border-color: var(--accent); box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
   }
   .field textarea {
-    min-height: 100px; resize: vertical;
+    min-height: 100px;
+    resize: none; /* 去掉右下角的 resize 手柄（幽灵小方框） */
     font-family: "Consolas", "Monaco", monospace;
     font-size: 12px; line-height: 1.5;
   }
@@ -319,35 +321,88 @@
     color: var(--text-mute); text-align: center;
     padding: 16px; font-size: 12px;
   }
+
+  /* 统一所有小控件的尺寸 */
   .btn-mini {
-    padding: 6px 10px;
+    padding: 0 10px;
+    height: var(--ctrl-height);
     border: 1px solid var(--border); background: transparent;
     color: var(--text-dim); font-size: 11px; border-radius: 6px;
     cursor: pointer; transition: all 0.2s;
     font-family: inherit;
     -webkit-appearance: none;
     touch-action: manipulation;
-    min-height: 30px;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    line-height: 1;
   }
   .btn-mini:hover { color: var(--text); border-color: var(--accent); }
   .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
   .btn-mini.active { background: rgba(77,158,255,0.15); color: var(--accent); border-color: var(--accent); }
 
-  /* 帮助按钮（圆形问号） */
+  /* 帮助按钮 —— 方形，与 btn-mini 等高 */
   .btn-help {
-    width: 26px; height: 26px;
-    min-height: 26px;
+    width: var(--ctrl-height);
+    min-width: var(--ctrl-height);
+    height: var(--ctrl-height);
+    min-height: var(--ctrl-height);
     padding: 0;
-    border-radius: 50%;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-sizing: border-box;
+    line-height: 1;
   }
   .btn-help:hover { color: var(--accent); border-color: var(--accent); background: rgba(77,158,255,0.1); }
+
+  /* 图标复制按钮（贴合主题色） */
+  .icon-copy {
+    width: var(--ctrl-height);
+    height: var(--ctrl-height);
+    min-width: var(--ctrl-height);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+    touch-action: manipulation;
+    font-family: inherit;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+  .icon-copy svg {
+    width: 14px; height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: block;
+  }
+  .icon-copy:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(77,158,255,0.1);
+  }
+  .icon-copy.copied {
+    color: var(--online);
+    border-color: var(--online);
+    background: rgba(74,222,128,0.1);
+  }
 
   /* ============ Ntfy 模块 ============ */
   .ntfy-box {
@@ -356,7 +411,7 @@
     border-radius: 8px;
     padding: 10px;
   }
-  .ntfy-topic-row {
+  .ntfy-row {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 8px;
     padding: 7px 10px;
@@ -364,32 +419,22 @@
     border-radius: 6px;
     border: 1px solid rgba(77,158,255,0.15);
   }
+  .ntfy-row:last-child { margin-bottom: 0; }
+  .ntfy-row.server-row { border-color: rgba(136,146,168,0.2); }
   .ntfy-label {
     font-size: 11px; color: var(--text-mute);
     flex-shrink: 0;
+    min-width: 32px;
   }
-  .ntfy-topic {
+  .ntfy-value {
     flex: 1;
     font-family: "Consolas", "Monaco", monospace;
-    font-size: 12px; color: var(--accent);
-    font-weight: 600;
+    font-size: 12px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
   }
-  .ntfy-actions {
-    display: flex; gap: 6px;
-    flex-wrap: wrap;
-  }
-  .ntfy-actions .btn-mini {
-    flex: 1 1 calc(33.33% - 4px);
-    min-width: 80px;
-    text-align: center;
-    text-decoration: none;
-    display: flex; align-items: center; justify-content: center;
-    padding: 7px 4px;
-    font-size: 11px;
-  }
-  .ntfy-actions a.btn-mini { color: var(--text-dim); }
-  .ntfy-actions a.btn-mini:hover { color: var(--accent); border-color: var(--accent); }
+  .ntfy-topic { color: var(--accent); font-weight: 600; }
+  .ntfy-server { color: var(--text-dim); font-size: 11px; }
 
   .btn {
     width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
@@ -595,6 +640,7 @@
   }
   .modal h3 { font-size: 16px; margin-bottom: 12px; color: var(--warning); }
   .modal h3.accent { color: var(--accent); }
+  .modal h3.danger { color: var(--offline); }
   .modal p {
     color: var(--text-dim); line-height: 1.6;
     font-size: 13px; margin-bottom: 14px; white-space: pre-wrap;
@@ -605,8 +651,12 @@
     background: var(--accent); color: #fff; font-size: 13px;
     cursor: pointer; font-family: inherit;
     -webkit-appearance: none; touch-action: manipulation;
+    min-height: 36px;
   }
   .modal button.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .modal button.danger-btn { background: #d32f2f; }
+  .modal button.danger-btn:hover { background: #f44336; }
+
   .modal .readme-section { margin-bottom: 16px; }
   .modal .readme-section h4 {
     color: var(--accent); font-size: 13px; margin-bottom: 6px;
@@ -625,6 +675,37 @@
     background: rgba(77,158,255,0.12);
     color: var(--accent); padding: 1px 6px; border-radius: 4px;
     font-family: "Consolas", "Monaco", monospace; font-size: 11px;
+    word-break: break-all;
+  }
+  .modal .readme-section .hint-badge {
+    display: inline-block;
+    background: rgba(74,222,128,0.15);
+    color: var(--online);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+
+  /* Ntfy 帮助弹窗里的下载按钮区 */
+  .ntfy-download-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .ntfy-download-actions a.btn-mini {
+    flex: 1 1 auto;
+    text-decoration: none;
+    color: var(--text-dim);
+    padding: 8px 14px;
+    height: 36px;
+  }
+  .ntfy-download-actions a.btn-mini:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(77,158,255,0.1);
   }
 
   .loading {
@@ -674,18 +755,17 @@
       width: 5px; height: 10px;
     }
 
-    .ntfy-actions .btn-mini {
-      flex: 1 1 calc(50% - 3px);
-    }
     .maint-times input[type="time"] {
       padding: 8px 8px;
       font-size: 14px;
     }
-  }
 
-  @media (max-width: 360px) {
-    .ntfy-actions .btn-mini {
-      flex: 1 1 100%;
+    .modal button { padding: 10px 20px; }
+
+    .btn-help, .icon-copy {
+      width: 32px; height: 32px;
+      min-width: 32px; min-height: 32px;
+      font-size: 14px;
     }
   }
 </style>
@@ -729,12 +809,12 @@
         <textarea id="serverEditTextarea" style="display:none;min-height:110px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110 6732&#10;17区*49.235.42.168*6732"></textarea>
       </div>
 
-      <!-- Bark 密钥 -->
+      <!-- Bark 推送订阅 -->
       <div class="field">
         <div class="field-header">
-          <label>Bark 密钥 <span class="badge">iOS</span></label>
+          <label>Bark 推送订阅 <span class="badge">iOS</span></label>
           <div class="field-header-actions">
-            <button class="btn-mini btn-help" id="barkHelpBtn" title="Bark 使用说明">？</button>
+            <button class="btn-mini btn-help" id="barkHelpBtn" title="Bark 使用说明">?</button>
             <button class="btn-mini" id="barkEditToggle">编辑</button>
           </div>
         </div>
@@ -742,30 +822,33 @@
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
-      <!-- Ntfy 推送 -->
+      <!-- Ntfy 推送订阅 -->
       <div class="field">
         <div class="field-header">
           <label>Ntfy 推送订阅 <span class="badge">Android</span></label>
           <div class="field-header-actions">
-            <button class="btn-mini btn-help" id="ntfyHelpBtn" title="Ntfy 使用说明">？</button>
+            <button class="btn-mini btn-help" id="ntfyHelpBtn" title="Ntfy 使用说明">?</button>
           </div>
         </div>
         <div class="ntfy-box">
-          <div class="ntfy-topic-row">
-            <span class="ntfy-label">频道</span>
-            <span class="ntfy-topic" id="ntfyTopic">jinyong-server-alert</span>
+          <div class="ntfy-row server-row">
+            <span class="ntfy-label">服务器</span>
+            <span class="ntfy-value ntfy-server" id="ntfyServer">https://my-ntfy.onrender.com</span>
+            <button class="icon-copy" id="ntfyCopyServerBtn" title="复制服务器地址">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
           </div>
-          <div class="ntfy-actions">
-            <button class="btn-mini" id="ntfyCopyBtn">📋 复制频道</button>
-            <a class="btn-mini" id="ntfyApkBtn" href="ntfy.apk" download="ntfy.apk">📥 下载 APK</a>
-            <a class="btn-mini" id="ntfyLatestBtn"
-               href="https://github.com/binwiederhier/ntfy/releases/latest"
-               target="_blank" rel="noopener">🔗 最新版</a>
+          <div class="ntfy-row">
+            <span class="ntfy-label">频道</span>
+            <span class="ntfy-value ntfy-topic" id="ntfyTopic">jinyong-server-alert</span>
+            <button class="icon-copy" id="ntfyCopyTopicBtn" title="复制频道名">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- 免告警维护时段（固定 2 条规则） -->
+      <!-- 免告警维护时段 -->
       <div class="field">
         <div class="field-header">
           <label>免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
@@ -864,12 +947,25 @@
   </section>
 </div>
 
+<!-- 通用提示弹窗 -->
 <div class="modal-mask" id="modalMask">
   <div class="modal">
     <h3 id="modalTitle">提示</h3>
     <p id="modalBody"></p>
     <div class="actions" id="modalActions">
       <button id="modalClose">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 二次确认弹窗 -->
+<div class="modal-mask" id="confirmMask">
+  <div class="modal">
+    <h3 id="confirmTitle" class="danger">确认操作</h3>
+    <p id="confirmBody"></p>
+    <div class="actions">
+      <button class="ghost" id="confirmCancel">取消</button>
+      <button class="danger-btn" id="confirmOk">确认</button>
     </div>
   </div>
 </div>
@@ -883,7 +979,7 @@
       <h4>⚙️ 快速开始</h4>
       <ul>
         <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
-        <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
+        <li>如需 Bark 报警，点「Bark 推送订阅」旁的「编辑」填入 device_key</li>
         <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的频道</li>
         <li>免告警维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
@@ -904,6 +1000,16 @@
       <h4>🛰 探针原理</h4>
       <ul>
         <li>服务器正确解密并返回 payload[0]=0x01 才算「在线」</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>📡 推送服务说明</h4>
+      <ul>
+        <li>Bark：使用官方公共服务 <code>api.day.app</code>，专为 iOS 设计</li>
+        <li><b>Ntfy：使用自建的私有服务器 <code>https://my-ntfy.onrender.com</code>，不是公共的 ntfy.sh</b></li>
+        <li>自建服务器无每日消息配额限制，消息不外传，更安全</li>
+        <li>手机端需在 Ntfy App 内手动修改服务器地址为上述地址</li>
       </ul>
     </div>
 
@@ -974,7 +1080,7 @@
     <div class="readme-section">
       <h4>📝 填入监控面板</h4>
       <ul>
-        <li>点「Bark 密钥」旁的「编辑」按钮进入编辑态</li>
+        <li>点「Bark 推送订阅」旁的「编辑」按钮进入编辑态</li>
         <li>每行粘贴一个 device_key，多个设备可填多行</li>
         <li>保存后，每条密钥前面会出现复选框，可单独勾选 / 取消</li>
         <li>勾选 = 接收推送，取消勾选 = 不接收</li>
@@ -1002,19 +1108,42 @@
     <h3 class="accent">📱 Ntfy 推送使用说明（Android）</h3>
 
     <div class="readme-section">
-      <h4>📥 安装 Ntfy</h4>
+      <h4>🌐 使用自建服务器 <span class="hint-badge">重要</span></h4>
       <ul>
-        <li>点击 Ntfy 模块下方的「📥 下载 APK」下载站内缓存版</li>
-        <li>或点「🔗 最新版」跳转官方 GitHub Releases 下载最新版</li>
-        <li>Ntfy 是一款开源免费的推送工具，安装包只有约 8MB</li>
+        <li>本系统 Ntfy 推送使用的是<b>自建私有服务器</b>，而非公共的 ntfy.sh</li>
+        <li>服务器地址：<code>https://my-ntfy.onrender.com</code></li>
+        <li>自建服务器无每日 250 条消息配额限制，消息不外传，更安全</li>
       </ul>
     </div>
 
     <div class="readme-section">
-      <h4>📡 订阅频道</h4>
+      <h4>📥 下载 Ntfy 客户端</h4>
       <ul>
-        <li>打开 Ntfy App → 点右下角的「+」号</li>
-        <li>输入频道名：<code>jinyong-server-alert</code>（也可点页面上「📋 复制频道」一键复制）</li>
+        <li>推荐下载官方最新版，或使用站内缓存版 APK</li>
+        <li>Ntfy 是一款开源免费的推送工具，安装包只有约 8MB</li>
+      </ul>
+      <div class="ntfy-download-actions">
+        <a class="btn-mini" id="ntfyApkBtn" href="ntfy.apk" download="ntfy.apk">📥 下载 APK（站内缓存）</a>
+        <a class="btn-mini" id="ntfyLatestBtn"
+           href="https://github.com/binwiederhier/ntfy/releases/latest"
+           target="_blank" rel="noopener">🔗 官方最新版</a>
+      </div>
+    </div>
+
+    <div class="readme-section">
+      <h4>⚙️ 第一步：修改服务器地址 <span class="hint-badge">关键</span></h4>
+      <ul>
+        <li>打开 Ntfy App → 右上角菜单 → 「Settings」</li>
+        <li>找到「Default server」选项，改为：<code>https://my-ntfy.onrender.com</code></li>
+        <li>保存后 App 会切换到自建服务器</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>📡 第二步：订阅频道</h4>
+      <ul>
+        <li>回到首页 → 点右下角的「+」号</li>
+        <li>输入频道名：<code>jinyong-server-alert</code></li>
         <li>点击「Subscribe」完成订阅</li>
         <li>订阅后即可收到推送，无需其他配置</li>
       </ul>
@@ -1071,14 +1200,15 @@ const state = {
   maintenanceWindows: [],
   barkSuppressed: false,
   ntfyTopic: "jinyong-server-alert",
+  ntfyServer: "https://my-ntfy.onrender.com",
   lastRenderedLines: [],
   lastRenderTab: "",
 };
 
-const POLL_STATUS = 5000;      // 5 秒
-const POLL_LOGS = 5000;        // 5 秒
-const POLL_CONFIG = 15000;     // 15 秒
-const POLL_RESOURCE = 60000;   // 60 秒
+const POLL_STATUS = 5000;
+const POLL_LOGS = 5000;
+const POLL_CONFIG = 15000;
+const POLL_RESOURCE = 60000;
 const MAX_RTT_HISTORY = 30;
 const DEFAULT_PORT = 6732;
 
@@ -1175,29 +1305,58 @@ function showModal(title, body, onClose) {
 }
 $("modalClose").addEventListener("click", () => $("modalMask").classList.remove("show"));
 
+// ---------- 二次确认弹窗 ----------
+function showConfirm(title, body) {
+  return new Promise((resolve) => {
+    $("confirmTitle").textContent = title;
+    $("confirmBody").textContent = body;
+    $("confirmMask").classList.add("show");
+
+    const okBtn = $("confirmOk");
+    const cancelBtn = $("confirmCancel");
+
+    const cleanup = () => {
+      $("confirmMask").classList.remove("show");
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+    };
+    const onOk = () => { cleanup(); resolve(true); };
+    const onCancel = () => { cleanup(); resolve(false); };
+
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+  });
+}
+
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
 
-// ---------- Bark / Ntfy 帮助弹窗 ----------
 $("barkHelpBtn").addEventListener("click", () => $("barkHelpMask").classList.add("show"));
 $("barkHelpClose").addEventListener("click", () => $("barkHelpMask").classList.remove("show"));
 
 $("ntfyHelpBtn").addEventListener("click", () => $("ntfyHelpMask").classList.add("show"));
 $("ntfyHelpClose").addEventListener("click", () => $("ntfyHelpMask").classList.remove("show"));
 
-// ---------- Ntfy 一键复制 ----------
-$("ntfyCopyBtn").addEventListener("click", async () => {
-  const topic = ($("ntfyTopic").textContent || "").trim();
-  if (!topic) return;
+// ---------- 复制按钮通用逻辑 ----------
+async function copyWithFeedback(btn, text) {
+  if (!text) return;
   try {
-    await navigator.clipboard.writeText(topic);
-    const btn = $("ntfyCopyBtn");
-    const old = btn.textContent;
-    btn.textContent = "✅ 已复制";
-    setTimeout(() => { btn.textContent = old; }, 1500);
+    await navigator.clipboard.writeText(text);
+    btn.classList.add("copied");
+    setTimeout(() => btn.classList.remove("copied"), 1500);
   } catch (e) {
-    showModal("复制失败", "浏览器拒绝访问剪贴板。\n频道名：" + topic);
+    showModal("复制失败", "浏览器拒绝访问剪贴板。\n内容：" + text);
   }
+}
+
+$("ntfyCopyServerBtn").addEventListener("click", () => {
+  const v = ($("ntfyServer").textContent || "").trim();
+  copyWithFeedback($("ntfyCopyServerBtn"), v);
+});
+
+$("ntfyCopyTopicBtn").addEventListener("click", () => {
+  const v = ($("ntfyTopic").textContent || "").trim();
+  copyWithFeedback($("ntfyCopyTopicBtn"), v);
 });
 
 // ---------- 服务器文本解析 ----------
@@ -1664,9 +1823,22 @@ $("maintEditToggle").addEventListener("click", async () => {
   renderMaintenanceList();
 });
 
-// ---------- 清空日志 ----------
+// ---------- 清空日志（带二次确认） ----------
 async function clearLogs(which) {
   if (!state.backendUrl) return;
+
+  let body = "";
+  if (which === "check") {
+    body = "确定要清空「实时检测日志」吗？\n此操作无法撤销。";
+  } else if (which === "timeout") {
+    body = "确定要清空「超时告警日志」吗？\n此操作无法撤销。";
+  } else {
+    body = "确定要清空当前显示的日志吗？\n此操作无法撤销。";
+  }
+
+  const ok = await showConfirm("确认清空", body);
+  if (!ok) return;
+
   try {
     await fetch(apiUrl("/api/logs/clear"), {
       method: "POST",
@@ -1684,6 +1856,7 @@ async function clearLogs(which) {
     renderLogs();
   } catch (e) { console.warn(e); }
 }
+
 $("clearCheckLogBtn").addEventListener("click", () => clearLogs("check"));
 $("clearTimeoutLogBtn").addEventListener("click", () => clearLogs("timeout"));
 $("clearLogBtn").addEventListener("click", () => clearLogs(state.currentTab === "check" ? "check" : "timeout"));
@@ -1772,6 +1945,11 @@ async function fetchStatus() {
     if (data.ntfy_topic && data.ntfy_topic !== state.ntfyTopic) {
       state.ntfyTopic = data.ntfy_topic;
       $("ntfyTopic").textContent = data.ntfy_topic;
+    }
+    // 服务器地址：显示完整 URL（保留 https://）
+    if (data.ntfy_server && data.ntfy_server !== state.ntfyServer) {
+      state.ntfyServer = data.ntfy_server;
+      $("ntfyServer").textContent = data.ntfy_server;
     }
 
     state.barkSuppressed = !!data.bark_suppressed;
@@ -1871,9 +2049,7 @@ function renderTable() {
   const offline = total - online;
   statsText.innerHTML = `共 ${total} 台 · <b>在线 ${online}</b> · <i>离线 ${offline}</i>`;
 
-  // 处理空数据
   if (!list.length) {
-    // 清掉所有数据行
     tableBody.querySelectorAll("tr[data-name]").forEach((tr) => tr.remove());
     if (!tableBody.querySelector("tr:not([data-name])")) {
       tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#5a6478;">暂无数据</td></tr>';
@@ -1881,10 +2057,8 @@ function renderTable() {
     return;
   }
 
-  // 清掉"暂无数据"占位行
   tableBody.querySelectorAll("tr:not([data-name])").forEach((tr) => tr.remove());
 
-  // 已有行索引
   const existingRows = {};
   tableBody.querySelectorAll("tr[data-name]").forEach((tr) => {
     existingRows[tr.dataset.name] = tr;
@@ -1930,7 +2104,6 @@ function renderTable() {
 
     tr.querySelector(".err-text").textContent = r.err || "";
 
-    // Sparkline 只在数据变化时重绘
     const canvas = tr.querySelector(".sparkline");
     const rttHistory = state.rttHistory[r.name] || [];
     const hash = rttHistory.join(",");
@@ -1939,11 +2112,9 @@ function renderTable() {
       drawSparkline(canvas, rttHistory);
     }
 
-    // 移动行以保持顺序
     tableBody.appendChild(tr);
   });
 
-  // 删除不再存在的行
   Object.keys(existingRows).forEach((name) => {
     if (!seen.has(name)) {
       existingRows[name].remove();
@@ -1998,7 +2169,6 @@ function drawSparkline(canvas, values) {
   ctx.fill();
 }
 
-// ---------- 日志染色（合并正则） ----------
 function colorizeLogLine(line) {
   const html = escapeHtml(line);
   return html.replace(
@@ -2010,12 +2180,10 @@ function colorizeLogLine(line) {
   );
 }
 
-// ---------- 日志渲染（增量追加） ----------
 function renderLogs() {
   const lines = state.currentTab === "check" ? state.logs : state.timeoutLogs;
   const prev = state.lastRenderedLines || [];
 
-  // 空日志
   if (!lines.length) {
     logContent.textContent = "暂无日志...";
     state.lastRenderedLines = [];
@@ -2023,7 +2191,6 @@ function renderLogs() {
     return;
   }
 
-  // 首次渲染 / 切换 tab：全量
   if (!prev.length || state.lastRenderTab !== state.currentTab) {
     renderLogsFull(lines);
     state.lastRenderedLines = lines.slice();
@@ -2031,11 +2198,9 @@ function renderLogs() {
     return;
   }
 
-  // 用旧列表的最后一条日志作为游标
   const prevLast = prev[prev.length - 1];
   const idx = lines.lastIndexOf(prevLast);
 
-  // 找不到旧日志（被清空或中间跳变）：全量
   if (idx === -1) {
     renderLogsFull(lines);
     state.lastRenderedLines = lines.slice();
@@ -2043,22 +2208,18 @@ function renderLogs() {
     return;
   }
 
-  // 没有新日志
   if (idx === lines.length - 1) {
     state.lastRenderedLines = lines.slice();
     return;
   }
 
-  // 有新日志
   const newLines = lines.slice(idx + 1);
   const domCount = logContent.querySelectorAll(".log-line").length;
   const maxKeep = state.currentTab === "check" ? 300 : 1500;
 
   if (domCount + newLines.length > maxKeep) {
-    // DOM 中累计太多，全量重绘
     renderLogsFull(lines);
   } else {
-    // 增量追加
     const frag = document.createDocumentFragment();
     newLines.forEach((line) => {
       const span = document.createElement("span");
@@ -2068,7 +2229,6 @@ function renderLogs() {
     });
     logContent.appendChild(frag);
 
-    // 自动滚动
     if (state.autoScroll) {
       logContent.scrollTop = logContent.scrollHeight;
     }

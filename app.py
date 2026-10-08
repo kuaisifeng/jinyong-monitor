@@ -48,8 +48,9 @@ _render_cache = {"data": None, "expire": 0}
 _render_lock = threading.Lock()
 
 # ==================== Ntfy 推送配置 ====================
+# 使用自建私有服务器，不走公共 ntfy.sh，无每日消息配额限制
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "jinyong-server-alert")
-NTFY_SERVER = "https://ntfy.sh"
+NTFY_SERVER = os.getenv("NTFY_SERVER", "https://my-ntfy.onrender.com")
 
 # 中文星期映射
 WEEKDAY_CN = {
@@ -442,9 +443,8 @@ def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, strea
 
 
 def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
-    """向 Ntfy 频道发送报警（JSON API + 详细日志）"""
-    if not NTFY_TOPIC:
-        print("[Ntfy] 未配置 NTFY_TOPIC，跳过", flush=True)
+    """向自建 Ntfy 服务器推送报警（JSON API）"""
+    if not NTFY_TOPIC or not NTFY_SERVER:
         return False
     payload = {
         "topic": NTFY_TOPIC,
@@ -466,15 +466,10 @@ def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
                 "Content-Type": "application/json",
                 "User-Agent": "jinyong-monitor/1.0",
             },
-            timeout=10,
-        )
-        print(
-            f"[Ntfy] HTTP {r.status_code} | topic={NTFY_TOPIC} | resp={r.text[:200]}",
-            flush=True,
+            timeout=5,
         )
         return r.status_code == 200
-    except Exception as e:
-        print(f"[Ntfy] 发送异常: {type(e).__name__}: {e}", flush=True)
+    except Exception:
         return False
 
 
@@ -662,6 +657,7 @@ def api_status():
     result["bark_keys"] = cfg.get("bark_keys", [])
     result["servers_config"] = cfg.get("servers", [])
     result["ntfy_topic"] = NTFY_TOPIC
+    result["ntfy_server"] = NTFY_SERVER
     return jsonify(result)
 
 
