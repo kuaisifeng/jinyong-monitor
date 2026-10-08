@@ -27,8 +27,40 @@
     --cb-bg-hover: #202844;
     --cb-checked: #4d9eff;
     --cb-checked-glow: rgba(77,158,255,0.45);
+    /* 滚动条配色 */
+    --scrollbar-track: rgba(13,18,32,0.5);
+    --scrollbar-thumb: #2a3350;
+    --scrollbar-thumb-hover: #3a4570;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  /* ============ 全局深色滚动条 ============ */
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+  /* Webkit (Chrome / Safari / Edge) */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   html, body {
     height: 100%; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -309,6 +341,51 @@
   .btn-mini.danger:hover { color: var(--offline); border-color: var(--offline); }
   .btn-mini.active { background: rgba(77,158,255,0.15); color: var(--accent); border-color: var(--accent); }
 
+  /* ============ Ntfy 模块 ============ */
+  .ntfy-box {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .ntfy-topic-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
+    padding: 7px 10px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    border: 1px solid rgba(77,158,255,0.15);
+  }
+  .ntfy-label {
+    font-size: 11px; color: var(--text-mute);
+    flex-shrink: 0;
+  }
+  .ntfy-topic {
+    flex: 1;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px; color: var(--accent);
+    font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ntfy-actions {
+    display: flex; gap: 6px; margin-bottom: 8px;
+  }
+  .ntfy-actions .btn-mini {
+    flex: 1; text-align: center;
+    text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6px 4px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .ntfy-actions a.btn-mini { color: var(--text-dim); }
+  .ntfy-actions a.btn-mini:hover { color: var(--accent); border-color: var(--accent); }
+  .ntfy-tip {
+    font-size: 10px;
+    color: var(--text-mute);
+    line-height: 1.5;
+  }
+
   .btn {
     width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
     background: var(--bg-card-hover); color: var(--text);
@@ -476,9 +553,6 @@
     white-space: pre-wrap; word-break: break-all;
     -webkit-overflow-scrolling: touch;
   }
-  .log-content::-webkit-scrollbar { width: 8px; height: 8px; }
-  .log-content::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 4px; }
-  .log-content::-webkit-scrollbar-thumb:hover { background: #3a4570; }
   .log-line { display: block; color: #ffffff; }
   .kw-green { color: #4ade80; font-weight: 600; }
   .kw-red { color: #f87171; font-weight: 600; }
@@ -594,7 +668,7 @@
     ⚡ 后端统一管理状态 · 多设备实时同步 · 网页只做展示
   </div>
   <div class="topbar-right">
-    <span class="maint-badge" id="maintBadge">🔧 维护时段·Bark 已静默</span>
+    <span class="maint-badge" id="maintBadge">🔧 维护时段·告警已静默</span>
     <button class="icon-btn" id="readmeBtn" title="使用说明">?</button>
     <div class="clock" id="clock">--:--:--</div>
     <div class="run-indicator stopped" id="runIndicator">
@@ -632,10 +706,34 @@
         <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
+      <!-- Ntfy 推送 -->
+      <div class="field">
+        <div class="field-header">
+          <label>Ntfy 推送订阅 <span class="badge">一键订阅</span></label>
+        </div>
+        <div class="ntfy-box">
+          <div class="ntfy-topic-row">
+            <span class="ntfy-label">主题</span>
+            <span class="ntfy-topic" id="ntfyTopic">jinyong-server-alert</span>
+          </div>
+          <div class="ntfy-actions">
+            <button class="btn-mini" id="ntfyCopyBtn">📋 复制主题</button>
+            <a class="btn-mini" id="ntfyApkBtn" href="ntfy.apk" download="ntfy.apk">📥 下载 APK</a>
+            <a class="btn-mini" id="ntfyLatestBtn"
+               href="https://github.com/binwiederhier/ntfy/releases/latest"
+               target="_blank" rel="noopener">🔗 最新版</a>
+          </div>
+          <div class="ntfy-tip">
+            手机安装 Ntfy App 后，在 App 内订阅上述主题即可收到报警推送。
+            「下载 APK」为站内缓存版，可能非最新；「最新版」跳转官方 GitHub Releases。
+          </div>
+        </div>
+      </div>
+
       <!-- 维护时段（固定 2 条规则） -->
       <div class="field">
         <div class="field-header">
-          <label>Bark 免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
+          <label>免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
           <button class="btn-mini" id="maintEditToggle">编辑</button>
         </div>
         <div id="maintViewList" class="check-list" style="max-height:150px;"></div>
@@ -742,7 +840,7 @@
 </div>
 
 <div class="modal-mask" id="readmeMask">
-  <div class="modal" style="max-width:560px;">
+  <div class="modal" style="max-width:580px;">
     <h3 class="accent">📖 使用说明</h3>
 
     <div class="readme-section">
@@ -750,7 +848,8 @@
       <ul>
         <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
         <li>如需 Bark 报警，点「Bark 密钥」旁的「编辑」填入 device_key</li>
-        <li>维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
+        <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的主题</li>
+        <li>免告警维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
         <li>点「▶ 启动监控」开始探测</li>
       </ul>
@@ -782,10 +881,21 @@
     </div>
 
     <div class="readme-section">
-      <h4>🔧 Bark 免告警维护时段</h4>
+      <h4>📱 Ntfy 推送订阅</h4>
+      <ul>
+        <li>Ntfy 是开源免费的推送服务，一个主题可多设备同时订阅</li>
+        <li>手机安装 Ntfy App → 订阅页面显示的主题 → 完成</li>
+        <li>无需配置密钥，订阅该主题的所有设备都会收到报警</li>
+        <li>不想接收推送时，在 App 内取消订阅即可</li>
+        <li>APK 双下载入口：站内缓存版（走 Cloudflare）和官方 GitHub 最新版</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔧 免告警维护时段</h4>
       <ul>
         <li>可视化勾选星期 + 时分选择器，无需手写格式</li>
-        <li>维护时段内：日志照常记录，但不会触发 Bark 推送</li>
+        <li>维护时段内：日志照常记录，但不会触发 Bark / Ntfy 推送</li>
         <li>默认预填：工作日 07:00-07:30、周末 09:30-10:00</li>
       </ul>
     </div>
@@ -858,12 +968,13 @@ const state = {
   barkKeys: [],
   maintenanceWindows: [],
   barkSuppressed: false,
+  ntfyTopic: "jinyong-server-alert",
 };
 
 const POLL_STATUS = 2000;
 const POLL_LOGS = 3000;
 const POLL_CONFIG = 5000;
-const POLL_RESOURCE = 60000;  // 资源监控 60 秒刷新一次
+const POLL_RESOURCE = 60000;
 const MAX_RTT_HISTORY = 30;
 const DEFAULT_PORT = 6732;
 
@@ -957,6 +1068,20 @@ $("modalClose").addEventListener("click", () => $("modalMask").classList.remove(
 
 $("readmeBtn").addEventListener("click", () => $("readmeMask").classList.add("show"));
 $("readmeClose").addEventListener("click", () => $("readmeMask").classList.remove("show"));
+
+// ---------- Ntfy 一键复制 ----------
+$("ntfyCopyBtn").addEventListener("click", async () => {
+  const topic = ($("ntfyTopic").textContent || "").trim();
+  if (!topic) return;
+  try {
+    await navigator.clipboard.writeText(topic);
+    const btn = $("ntfyCopyBtn");
+    btn.textContent = "✅ 已复制";
+    setTimeout(() => { btn.textContent = "📋 复制主题"; }, 1500);
+  } catch (e) {
+    showModal("复制失败", "浏览器拒绝访问剪贴板。\n主题：" + topic);
+  }
+});
 
 // ---------- 服务器文本解析 ----------
 function parseServersText(text) {
@@ -1510,6 +1635,12 @@ async function fetchStatus() {
     state.running = !!data.running;
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
+
+    // 同步 Ntfy 主题名（从后端获取，保证一致性）
+    if (data.ntfy_topic && data.ntfy_topic !== state.ntfyTopic) {
+      state.ntfyTopic = data.ntfy_topic;
+      $("ntfyTopic").textContent = data.ntfy_topic;
+    }
 
     state.barkSuppressed = !!data.bark_suppressed;
     maintBadge.classList.toggle("show", state.barkSuppressed);

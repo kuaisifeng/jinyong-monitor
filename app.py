@@ -4,6 +4,7 @@ import time
 import os
 import json
 import requests
+from email.header import Header
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request
 
@@ -38,18 +39,19 @@ MAX_TIMEOUT_LOG = 1000
 DEFAULT_PORT = 6732
 
 # ==================== Render 资源监控配置 ====================
-# 从环境变量读取，禁止硬编码
 RENDER_API_TOKEN = os.getenv("RENDER_API_TOKEN", "")
 RENDER_SERVICE_ID = os.getenv("RENDER_SERVICE_ID", "")
-RENDER_LIMIT_BW_MB = 5120   # 免费 Hobby 计划 5 GB = 5120 MB
-RENDER_LIMIT_MEM_MB = 512   # 免费 Hobby 实例 512 MB
-RENDER_CACHE_SECONDS = 600  # 10 分钟缓存
+RENDER_LIMIT_BW_MB = 5120
+RENDER_LIMIT_MEM_MB = 512
+RENDER_CACHE_SECONDS = 600
 
-_render_cache = {
-    "data": None,
-    "expire": 0,
-}
+_render_cache = {"data": None, "expire": 0}
 _render_lock = threading.Lock()
+
+# ==================== Ntfy 推送配置 ====================
+# 硬编码主题名，可通过环境变量覆盖
+NTFY_TOPIC = os.getenv("NTFY_TOPIC", "jinyong-server-alert")
+NTFY_SERVER = "https://ntfy.sh"
 
 # 中文星期映射
 WEEKDAY_CN = {
@@ -78,12 +80,10 @@ _config_lock = threading.Lock()
 
 
 def parse_old_maintenance_string(s):
-    """解析旧格式字符串 -> (days, start, end) 或 None"""
     parts = s.strip().split()
     if len(parts) < 2:
         return None
     day_part, time_part = parts[0], parts[1]
-
     day_part = day_part.replace("～", "~").replace("-", "~")
     if "~" in day_part:
         d1s, d2s = day_part.split("~", 1)
@@ -97,7 +97,6 @@ def parse_old_maintenance_string(s):
         days = list(range(d1, d2 + 1))
     else:
         days = list(range(d1, 8)) + list(range(1, d2 + 1))
-
     time_part = time_part.replace("～", "~")
     if "-" not in time_part:
         return None
@@ -113,7 +112,6 @@ def parse_old_maintenance_string(s):
 
 
 def migrate_maintenance_windows(windows):
-    """把任意格式的维护时段统一成新格式列表"""
     if windows is None:
         return [dict(w) for w in DEFAULT_MAINTENANCE]
     result = []
@@ -210,10 +208,9 @@ def is_in_maintenance(windows, dt):
     return False
 
 
-# ==================== Render 资源监控核心函数 ====================
+# ==================== Render 资源监控 ====================
 
 def fetch_render_metrics():
-    """调用 Render API 拉取带宽 + 内存"""
     if not RENDER_API_TOKEN:
         raise Exception("未配置环境变量 RENDER_API_TOKEN")
     if not RENDER_SERVICE_ID:
@@ -224,12 +221,10 @@ def fetch_render_metrics():
         "Accept": "application/json",
     }
 
-    # UTC 本月 1 号 ~ 现在
     now_utc = datetime.now(timezone.utc)
     start = datetime(now_utc.year, now_utc.month, 1, tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     end = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # 1. 带宽（本月每小时增量，累加）
     bw_url = (
         f"https://api.render.com/v1/metrics/bandwidth"
         f"?resource={RENDER_SERVICE_ID}"
@@ -248,7 +243,6 @@ def fetch_render_metrics():
                 except Exception:
                     pass
 
-    # 2. 内存（取全部采样点中时间戳最新的）
     mem_url = (
         f"https://api.render.com/v1/metrics/memory"
         f"?resource={RENDER_SERVICE_ID}"
@@ -437,6 +431,37 @@ def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, strea
         send_bark_alert(key, name, ip, port, first_timeout_time, streak)
 
 
+def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
+    """向 Ntfy 主题发送报警。中文标题使用 RFC 2047 编码。"""
+    if not NTFY_TOPIC:
+        return False
+    title = f"⚠️ 服务器离线：{name}"
+    try:
+        encoded_title = Header(title, "utf-8").encode()
+    except Exception:
+        encoded_title = "Server Offline"
+    body = (
+        f"服务器：{name}\n"
+        f"IP：{ip}:{port}\n"
+        f"首次超时：{first_timeout_time}\n"
+        f"连续超时：{streak} 次"
+    )
+    try:
+        r = requests.post(
+            f"{NTFY_SERVER}/{NTFY_TOPIC}",
+            data=body.encode("utf-8"),
+            headers={
+                "Title": encoded_title,
+                "Priority": "urgent",
+                "Tags": "warning,skull",
+            },
+            timeout=5,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 async def monitor_loop(initial_cfg):
     sem = asyncio.Semaphore(20)
     streak_map = {}
@@ -552,9 +577,13 @@ async def monitor_loop(initial_cfg):
                 if len(STATE["logs"]) > MAX_CHECK_LOG:
                     STATE["logs"] = STATE["logs"][-MAX_CHECK_LOG:]
 
+            # 同时触发 Bark + Ntfy 推送（非维护时段）
             for name, ip, port, first_t, streak in alerts_to_send:
                 await asyncio.to_thread(
                     send_bark_alerts_to_all, bark_keys, name, ip, port, first_t, streak
+                )
+                await asyncio.to_thread(
+                    send_ntfy_alert, name, ip, port, first_t, streak
                 )
 
         except Exception as e:
@@ -617,6 +646,7 @@ def api_status():
     result["sidebar_collapsed"] = bool(cfg.get("sidebar_collapsed", False))
     result["bark_keys"] = cfg.get("bark_keys", [])
     result["servers_config"] = cfg.get("servers", [])
+    result["ntfy_topic"] = NTFY_TOPIC
     return jsonify(result)
 
 
@@ -749,7 +779,6 @@ def api_clear_logs():
 
 @app.route("/api/render_resource")
 def api_render_resource():
-    """Render 出站流量 + 内存占用，10 分钟缓存"""
     now_ts = time.time()
     with _render_lock:
         if _render_cache["data"] is not None and now_ts < _render_cache["expire"]:
@@ -761,7 +790,6 @@ def api_render_resource():
             _render_cache["expire"] = now_ts + RENDER_CACHE_SECONDS
         return jsonify(data)
     except Exception as e:
-        # 有旧缓存就返回旧数据
         with _render_lock:
             if _render_cache["data"] is not None:
                 return jsonify(_render_cache["data"])
