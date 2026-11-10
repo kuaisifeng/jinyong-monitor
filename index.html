@@ -791,6 +791,51 @@
     background: var(--online);
   }
   .lock-btn.logged { color: var(--accent); border-color: rgba(77,158,255,0.45); }
+
+  /* ============ 管理员登录弹框（与页面同一套深色风格） ============ */
+  .modal .modal-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    letter-spacing: 1px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  .modal .modal-input::placeholder {
+    color: var(--text-mute);
+    letter-spacing: 0;
+    font-size: 13px;
+  }
+  .modal .modal-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(77,158,255,0.15);
+  }
+  .modal .modal-input.shake { animation: inputShake 0.28s ease; }
+  @keyframes inputShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .modal .modal-err {
+    display: none;
+    color: var(--offline);
+    font-size: 12px;
+    margin: 8px 0 0;
+  }
+  .modal .modal-err.show { display: block; }
+
+  /* ============ 被断开提示 ============ */
+  .kick-modal { text-align: center; width: 320px; }
+  .kick-modal h3 { color: var(--accent); }
+  .kick-modal p { margin-bottom: 18px; }
+  .kick-modal .actions { justify-content: center; }
+  .kick-modal .actions button { min-width: 120px; }
 </style>
 </head>
 <body>
@@ -907,6 +952,7 @@
       <button class="btn primary admin-only" id="saveConfigBtn">💾 保存运行参数</button>
       <button class="btn success admin-only" id="startBtn">▶ 启动监控</button>
       <button class="btn danger admin-only" id="stopBtn" disabled>■ 停止监控</button>
+      <button class="btn admin-only" id="kickBtn">断开所有在线页面</button>
 
       <div class="divider admin-only"></div>
 
@@ -995,6 +1041,32 @@
   </div>
 </div>
 
+<!-- 管理员登录弹窗 -->
+<div class="modal-mask" id="adminMask">
+  <div class="modal" style="width:320px;">
+    <h3 class="accent">管理员登录</h3>
+    <p style="margin-bottom:12px;">输入管理口令后，才会显示明文 IP 并解锁配置项</p>
+    <input type="password" id="adminPwdInput" class="modal-input"
+           placeholder="金庸至尊最常用密码" autocomplete="off" spellcheck="false">
+    <p class="modal-err" id="adminErr">口令不对，再想想</p>
+    <div class="actions" style="margin-top:16px;">
+      <button class="ghost" id="adminCancel">取消</button>
+      <button id="adminOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 被断开提示 -->
+<div class="modal-mask" id="kickMask">
+  <div class="modal kick-modal">
+    <h3 class="accent">连接已断开</h3>
+    <p id="kickBody">所有在线页面已被管理员断开。本页面已停止刷新，以节省服务器流量。</p>
+    <div class="actions">
+      <button id="kickReconnect">重新连接</button>
+    </div>
+  </div>
+</div>
+
 <!-- 全局 README -->
 <div class="modal-mask" id="readmeMask">
   <div class="modal" style="max-width:580px;">
@@ -1017,9 +1089,19 @@
       <h4>🔐 公开视图与管理模式</h4>
       <ul>
         <li>未登录时页面是<b>只读脱敏视图</b>：IP 显示为 <code>49.234.*.*</code>，端口与推送密钥都不下发</li>
-        <li>点右上角 🔒 输入管理口令后，才会显示明文 IP，并解锁编辑 / 启停 / 清空等操作</li>
+        <li>点右上角 🔒 输入管理口令 <code>123321</code> 后，才会显示明文 IP，并解锁编辑 / 启停 / 清空等操作</li>
         <li>口令只保存在本机浏览器（localStorage），不会写进页面源码</li>
-        <li>口令由后端环境变量 <code>ADMIN_TOKEN</code> 决定；未配置时后端只提供掩码数据</li>
+        <li>口令默认为 <code>123321</code>，可用后端环境变量 <code>ADMIN_TOKEN</code> 改成别的</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🚪 断开在线页面（省流量）</h4>
+      <ul>
+        <li>每个开着的页面每 5 秒会向 Render 拉一次数据，开着不关会持续消耗流量</li>
+        <li>点「断开所有在线页面」后，所有设备（<b>包括当前页面</b>）5 秒内停止刷新</li>
+        <li>监控运行期间，每 5 分钟会自动断开一次，无需手动操作</li>
+        <li>被断开的页面会显示提示，点「重新连接」即可恢复</li>
       </ul>
     </div>
 
@@ -1220,6 +1302,8 @@ const BACKEND_URL = "https://jinyong-monitor.onrender.com";
 const state = {
   backendUrl: BACKEND_URL,
   isAdmin: false,
+  kicked: false,
+  kickEpoch: null,
   running: false,
   results: [],
   config: null,
@@ -1332,18 +1416,48 @@ async function verifyAdmin() {
 }
 
 async function enterAdmin() {
-  const t = prompt("请输入管理口令");
-  if (!t || !t.trim()) return;
-  setToken(t.trim());
+  const inp = $("adminPwdInput");
+  const err = $("adminErr");
+  inp.value = "";
+  err.classList.remove("show");
+  $("adminMask").classList.add("show");
+  setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+}
+
+function closeAdminModal() {
+  $("adminMask").classList.remove("show");
+  $("adminPwdInput").value = "";
+  $("adminErr").classList.remove("show");
+}
+
+function adminFail() {
+  const inp = $("adminPwdInput");
+  setToken("");
+  $("adminErr").classList.add("show");
+  inp.classList.add("shake");
+  setTimeout(() => inp.classList.remove("shake"), 300);
+  try { inp.select(); } catch (e) {}
+}
+
+async function submitAdmin() {
+  const inp = $("adminPwdInput");
+  const t = (inp.value || "").trim();
+  if (!t) {
+    inp.classList.add("shake");
+    setTimeout(() => inp.classList.remove("shake"), 300);
+    try { inp.focus(); } catch (e) {}
+    return;
+  }
+  setToken(t);
   if (await verifyAdmin()) {
+    closeAdminModal();
     state.isAdmin = true;
     applyAdminUI();
     state.configLoaded = false;
     await loadConfig(true);
     await fetchStatus();
   } else {
-    setToken("");
-    showModal("验证失败", "管理口令不正确，或后端未配置 ADMIN_TOKEN。");
+    adminFail();
   }
 }
 
@@ -1361,6 +1475,74 @@ async function exitAdmin() {
 $("adminBtn").addEventListener("click", () => {
   if (state.isAdmin) exitAdmin();
   else enterAdmin();
+});
+$("adminOk").addEventListener("click", submitAdmin);
+$("adminCancel").addEventListener("click", closeAdminModal);
+$("adminPwdInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submitAdmin();
+  } else if (e.key === "Escape") {
+    e.preventDefault();
+    closeAdminModal();
+  }
+});
+
+// ---------- 断开所有在线页面 ----------
+let pollTimers = [];
+
+function stopAllPolling() {
+  pollTimers.forEach((t) => clearInterval(t));
+  pollTimers = [];
+}
+
+function startPolling() {
+  stopAllPolling();
+  pollTimers.push(setInterval(fetchStatus, POLL_STATUS));
+  pollTimers.push(setInterval(fetchLogs, POLL_LOGS));
+  pollTimers.push(setInterval(() => {
+    if (state.backendUrl && !isAnyEditing()) loadConfig(true);
+  }, POLL_CONFIG));
+  pollTimers.push(setInterval(fetchRenderResource, POLL_RESOURCE));
+}
+
+const KICK_TEXT_DEFAULT = "所有在线页面已被管理员断开。本页面已停止刷新，以节省服务器流量。";
+
+function handleKicked(reason) {
+  if (state.kicked) return;
+  state.kicked = true;
+  stopAllPolling();
+  $("kickBody").textContent = reason || KICK_TEXT_DEFAULT;
+  $("kickMask").classList.add("show");
+}
+
+async function reconnect() {
+  $("kickMask").classList.remove("show");
+  state.kicked = false;
+  state.kickEpoch = null;
+  await fetchStatus();
+  if (!state.kicked) startPolling();
+}
+
+$("kickReconnect").addEventListener("click", reconnect);
+
+$("kickBtn").addEventListener("click", async () => {
+  const ok = await showConfirm(
+    "断开所有在线页面",
+    "所有正在打开本页面的设备（包括当前这个页面）都会立即停止刷新。\n监控运行期间也会每 5 分钟自动断开一次。\n确定继续吗？"
+  );
+  if (!ok) return;
+  try {
+    const r = await apiFetch("/api/kick", { method: "POST" });
+    const d = await r.json();
+    if (!d.ok) {
+      showModal("操作失败", d.msg || "未知错误");
+      return;
+    }
+    handleKicked("已断开所有在线页面，包括当前这个页面。");
+  } catch (e) {
+    showModal("操作失败", String(e));
+  }
 });
 
 function showLoading(show) { loading.classList.toggle("show", show); }
@@ -1533,7 +1715,7 @@ function normalizeMaintenance(cfgWindows) {
 
 // ---------- 加载完整配置 ----------
 async function loadConfig(force = false) {
-  if (!state.backendUrl) return;
+  if (!state.backendUrl || state.kicked) return;
   if (state.configLoaded && !force) return;
   try {
     const r = await apiFetch("/api/config");
@@ -2034,7 +2216,7 @@ function setBar(fillEl, pct) {
 }
 
 async function fetchRenderResource() {
-  if (!state.backendUrl) return;
+  if (!state.backendUrl || state.kicked) return;
   try {
     const r = await apiFetch("/api/render_resource");
     const data = await r.json();
@@ -2066,10 +2248,20 @@ async function fetchRenderResource() {
 
 // ---------- 拉取状态 ----------
 async function fetchStatus() {
-  if (!state.backendUrl) return;
+  if (!state.backendUrl || state.kicked) return;
   try {
     const r = await apiFetch("/api/status");
     const data = await r.json();
+
+    // 服务器 epoch 变了说明管理员（或自动策略）断开了所有页面
+    if (typeof data.kick_epoch === "number") {
+      if (state.kickEpoch === null) {
+        state.kickEpoch = data.kick_epoch;
+      } else if (data.kick_epoch !== state.kickEpoch) {
+        handleKicked();
+        return;
+      }
+    }
 
     const wasRunning = state.running;
     state.running = !!data.running;
@@ -2166,7 +2358,7 @@ async function fetchStatus() {
 }
 
 async function fetchLogs() {
-  if (!state.backendUrl) return;
+  if (!state.backendUrl || state.kicked) return;
   try {
     const r = await apiFetch("/api/logs");
     const data = await r.json();
@@ -2402,13 +2594,7 @@ function init() {
   fetchStatus();
   fetchLogs();
   fetchRenderResource();
-
-  setInterval(fetchStatus, POLL_STATUS);
-  setInterval(fetchLogs, POLL_LOGS);
-  setInterval(() => {
-    if (state.backendUrl && !isAnyEditing()) loadConfig(true);
-  }, POLL_CONFIG);
-  setInterval(fetchRenderResource, POLL_RESOURCE);
+  startPolling();
 }
 
 init();

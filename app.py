@@ -12,8 +12,8 @@ from flask import Flask, jsonify, request
 app = Flask(__name__)
 
 # ==================== 访问控制配置 ====================
-# 管理口令：只有携带正确 X-Admin-Token 的请求才能拿到明文 IP、改写配置、启停监控
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "").strip()
+# 管理口令：默认 123321，可用环境变量 ADMIN_TOKEN 覆盖
+ADMIN_TOKEN = (os.getenv("ADMIN_TOKEN", "") or "").strip() or "123321"
 # 允许跨域的前端来源（逗号分隔），默认只放行 Cloudflare Pages 站点
 ALLOWED_ORIGINS = [
     o.strip().rstrip("/")
@@ -98,6 +98,30 @@ def require_admin():
     if not is_admin():
         return jsonify({"ok": False, "msg": "管理口令无效或未登录"}), 403
     return None
+
+
+# ==================== 在线页面断开（省 Render 流量） ====================
+# 页面每 5 秒轮询 /api/status，开着不关就会持续消耗 Render 带宽。
+# 断开机制：后端维护一个 epoch 计数器，页面记住首次收到的值，
+# 一旦发现服务器的值变了就停掉全部定时器、停止一切请求。
+KICK_INTERVAL = int(os.getenv("KICK_INTERVAL", "300"))
+
+_kick_lock = threading.Lock()
+_kick_state = {"epoch": 1, "last_auto": 0.0, "last_reason": "", "last_at": ""}
+
+
+def bump_kick(reason=""):
+    """让所有在线页面在下一次轮询时自行断开"""
+    with _kick_lock:
+        _kick_state["epoch"] += 1
+        _kick_state["last_reason"] = reason
+        _kick_state["last_at"] = now_str(8)
+        return _kick_state["epoch"]
+
+
+def current_kick_epoch():
+    with _kick_lock:
+        return _kick_state["epoch"]
 
 
 def server_view(s, admin):
@@ -571,8 +595,17 @@ async def monitor_loop(initial_cfg):
         STATE["start_time"] = now_str(initial_cfg.get("timezone_offset", 8))
         STATE["timezone_offset"] = initial_cfg.get("timezone_offset", 8)
 
+    # 计时起点，避免刚启动就把页面全踢掉
+    _kick_state["last_auto"] = time.time()
+
     while not stop_event.is_set():
         round_count += 1
+
+        # 监控运行期间，每 KICK_INTERVAL 秒断开一次所有在线页面
+        if time.time() - _kick_state["last_auto"] >= KICK_INTERVAL:
+            _kick_state["last_auto"] = time.time()
+            bump_kick("监控运行中自动断开")
+            print(f"[kick] 已自动断开所有在线页面（每 {KICK_INTERVAL}s 一次）")
 
         try:
             with _config_lock:
@@ -751,6 +784,7 @@ def api_status():
             "server_time": now_str(STATE.get("timezone_offset", 8)),
             "bark_suppressed": STATE.get("bark_suppressed", False),
             "results": results,
+            "kick_epoch": current_kick_epoch(),
         }
     with _config_lock:
         cfg = load_config()
@@ -899,6 +933,16 @@ def api_stop():
     return jsonify({"ok": True, "msg": "已发送停止信号"})
 
 
+@app.route("/api/kick", methods=["POST"])
+def api_kick():
+    """断开所有正在开着的页面：它们下一次轮询到新 epoch 就会停止请求"""
+    guard = require_admin()
+    if guard:
+        return guard
+    epoch = bump_kick("管理员手动断开")
+    return jsonify({"ok": True, "kick_epoch": epoch, "msg": "所有在线页面将在 5 秒内断开"})
+
+
 @app.route("/api/logs")
 def api_logs():
     admin = is_admin()
@@ -959,7 +1003,8 @@ restore_logs_from_file()
 if not ADMIN_TOKEN:
     print("[boot] 警告：未设置 ADMIN_TOKEN，所有管理操作已禁用，页面只能是只读掩码模式")
 else:
-    print(f"[boot] 管理口令已启用；允许的跨域来源：{', '.join(ALLOWED_ORIGINS) or '（空）'}")
+    print(f"[boot] 管理口令已启用（{'环境变量' if os.getenv('ADMIN_TOKEN') else '默认值 123321'}）；"
+          f"允许的跨域来源：{', '.join(ALLOWED_ORIGINS) or '（空）'}")
 
 _boot_cfg = load_config()
 if _boot_cfg.get("servers"):
