@@ -2,19 +2,42 @@ import asyncio
 import threading
 import time
 import os
+import re
 import json
+import hmac
 import requests
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+# ==================== 访问控制配置 ====================
+# 管理口令：只有携带正确 X-Admin-Token 的请求才能拿到明文 IP、改写配置、启停监控
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "").strip()
+# 允许跨域的前端来源（逗号分隔），默认只放行 Cloudflare Pages 站点
+ALLOWED_ORIGINS = [
+    o.strip().rstrip("/")
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://jinyong-monitor.pages.dev,http://localhost:5000,http://127.0.0.1:5000",
+    ).split(",")
+    if o.strip()
+]
+
+MASK_PORT = "****"
+IP_PORT_RE = re.compile(r"(\d{1,3}(?:\.\d{1,3}){3})(?::\d{1,5})?")
+
 
 @app.after_request
 def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    origin = (request.headers.get("Origin") or "").rstrip("/")
+    if origin and origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Admin-Token"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    # 监控页不希望被搜索引擎收录
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
     return response
 
 
@@ -36,6 +59,66 @@ PROBE_CIPHER = bytes.fromhex(
 MAX_CHECK_LOG = 100
 MAX_TIMEOUT_LOG = 1000
 DEFAULT_PORT = 6732
+
+# ==================== 脱敏与鉴权 ====================
+
+def mask_ip(ip):
+    """把 IP 打码成 49.234.*.*，保留前两段便于排障但不暴露真实地址"""
+    s = str(ip or "").strip()
+    if not s:
+        return ""
+    parts = s.split(".")
+    if len(parts) == 4 and all(p.isdigit() for p in parts):
+        return f"{parts[0]}.{parts[1]}.*.*"
+    if ":" in s:  # IPv6
+        segs = [x for x in s.split(":") if x]
+        return (":".join(segs[:2]) + ":****") if segs else "****"
+    return (s[:4] + "***") if len(s) > 4 else "****"
+
+
+def mask_text(text):
+    """把任意文本中的 IP[:端口] 打码，用于日志脱敏"""
+    if not text:
+        return text
+    return IP_PORT_RE.sub(lambda m: mask_ip(m.group(1)), str(text))
+
+
+def is_admin():
+    """当前请求是否携带了有效的管理口令"""
+    if not ADMIN_TOKEN:
+        return False
+    token = request.headers.get("X-Admin-Token", "") or ""
+    return hmac.compare_digest(token, ADMIN_TOKEN)
+
+
+def require_admin():
+    """写操作守卫：返回 None 表示放行，否则返回可直接 return 的响应"""
+    if not ADMIN_TOKEN:
+        return jsonify({"ok": False, "msg": "后端未配置 ADMIN_TOKEN，管理功能已禁用"}), 503
+    if not is_admin():
+        return jsonify({"ok": False, "msg": "管理口令无效或未登录"}), 403
+    return None
+
+
+def server_view(s, admin):
+    """服务器条目的对外视图：非管理员只给掩码"""
+    ip = s.get("ip", "")
+    port = s.get("port", DEFAULT_PORT)
+    base = {"name": s.get("name", ""), "enabled": bool(s.get("enabled", True))}
+    if admin:
+        base.update({
+            "ip": ip,
+            "port": port,
+            "ip_display": ip,
+            "port_display": port,
+        })
+    else:
+        base.update({
+            "ip_display": mask_ip(ip),
+            "port_display": MASK_PORT,
+        })
+    return base
+
 
 # ==================== Render 资源监控配置 ====================
 RENDER_API_TOKEN = os.getenv("RENDER_API_TOKEN", "")
@@ -443,7 +526,11 @@ def send_bark_alerts_to_all(bark_keys, name, ip, port, first_timeout_time, strea
 
 
 def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
-    """向自建 Ntfy 服务器推送报警（JSON API）"""
+    """向自建 Ntfy 服务器推送报警（JSON API）
+
+    Ntfy 频道是公开可订阅的，所以正文里绝不写明文 IP / 端口，
+    只保留区服名和超时信息。
+    """
     if not NTFY_TOPIC or not NTFY_SERVER:
         return False
     payload = {
@@ -451,7 +538,6 @@ def send_ntfy_alert(name, ip, port, first_timeout_time, streak):
         "title": f"⚠️ 服务器离线：{name}",
         "message": (
             f"服务器：{name}\n"
-            f"IP：{ip}:{port}\n"
             f"首次超时：{first_timeout_time}\n"
             f"连续超时：{streak} 次"
         ),
@@ -552,7 +638,7 @@ async def monitor_loop(initial_cfg):
                     if name not in first_timeout_map:
                         first_timeout_map[name] = now_s
 
-                    timeout_line = f"[{now_s}] {name} ({ip}:{port}) - {err}  [连续第 {streak} 次]"
+                    timeout_line = f"[{now_s}] {name} - {err}  [连续第 {streak} 次]"
                     append_log_to_file(TIMEOUT_LOG_FILE, timeout_line, max_lines=MAX_TIMEOUT_LOG)
                     with STATE_LOCK:
                         STATE["timeout_logs"].append(timeout_line)
@@ -641,7 +727,22 @@ def index():
 
 @app.route("/api/status")
 def api_status():
+    admin = is_admin()
     with STATE_LOCK:
+        results = []
+        for r in STATE["results"].values():
+            item = dict(r)
+            raw_ip = item.get("ip", "")
+            raw_port = item.get("port", DEFAULT_PORT)
+            if admin:
+                item["ip_display"] = raw_ip
+                item["port_display"] = raw_port
+            else:
+                item["ip_display"] = mask_ip(raw_ip)
+                item["port_display"] = MASK_PORT
+                item.pop("ip", None)
+                item.pop("port", None)
+            results.append(item)
         result = {
             "running": STATE["running"],
             "start_time": STATE["start_time"],
@@ -649,13 +750,15 @@ def api_status():
             "timezone_offset": STATE.get("timezone_offset", 8),
             "server_time": now_str(STATE.get("timezone_offset", 8)),
             "bark_suppressed": STATE.get("bark_suppressed", False),
-            "results": list(STATE["results"].values()),
+            "results": results,
         }
     with _config_lock:
         cfg = load_config()
+    result["is_admin"] = admin
     result["sidebar_collapsed"] = bool(cfg.get("sidebar_collapsed", False))
-    result["bark_keys"] = cfg.get("bark_keys", [])
-    result["servers_config"] = cfg.get("servers", [])
+    # 推送密钥只在通过口令校验后下发，避免任何人拿到后给你手机推垃圾
+    result["bark_keys"] = cfg.get("bark_keys", []) if admin else []
+    result["servers_config"] = [server_view(s, admin) for s in cfg.get("servers", [])]
     result["ntfy_topic"] = NTFY_TOPIC
     result["ntfy_server"] = NTFY_SERVER
     return jsonify(result)
@@ -663,12 +766,35 @@ def api_status():
 
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
+    admin = is_admin()
     with _config_lock:
-        return jsonify(load_config())
+        cfg = load_config()
+    if admin:
+        out = json.loads(json.dumps(cfg))
+        out["is_admin"] = True
+        for s in out.get("servers", []):
+            s["ip_display"] = s.get("ip", "")
+            s["port_display"] = s.get("port", DEFAULT_PORT)
+        return jsonify(out)
+    # 公开视图：不含明文 IP、端口、Bark 密钥
+    return jsonify({
+        "interval": cfg.get("interval", 20),
+        "timeout": cfg.get("timeout", 1.5),
+        "alert_streak": cfg.get("alert_streak", 5),
+        "timezone_offset": cfg.get("timezone_offset", 8),
+        "sidebar_collapsed": bool(cfg.get("sidebar_collapsed", False)),
+        "maintenance_windows": cfg.get("maintenance_windows", []),
+        "servers": [server_view(s, False) for s in cfg.get("servers", [])],
+        "bark_keys": [],
+        "is_admin": False,
+    })
 
 
 @app.route("/api/config", methods=["POST"])
 def api_set_config():
+    guard = require_admin()
+    if guard:
+        return guard
     data = request.get_json(force=True) or {}
     with _config_lock:
         cfg = load_config()
@@ -705,7 +831,12 @@ def api_set_config():
         cfg["servers"] = servers_clean
         cfg["maintenance_windows"] = migrate_maintenance_windows(cfg.get("maintenance_windows"))
         save_config(cfg)
-    return jsonify({"ok": True, "config": cfg})
+        out = json.loads(json.dumps(cfg))
+        out["is_admin"] = True
+        for s in out.get("servers", []):
+            s["ip_display"] = s.get("ip", "")
+            s["port_display"] = s.get("port", DEFAULT_PORT)
+    return jsonify({"ok": True, "config": out})
 
 
 @app.route("/api/sidebar/toggle", methods=["POST"])
@@ -721,6 +852,9 @@ def api_sidebar_toggle():
 
 @app.route("/api/servers/toggle", methods=["POST"])
 def api_toggle_server():
+    guard = require_admin()
+    if guard:
+        return guard
     data = request.get_json(force=True) or {}
     name = data.get("name")
     enabled = bool(data.get("enabled", True))
@@ -742,6 +876,9 @@ def api_toggle_server():
 
 @app.route("/api/start", methods=["POST"])
 def api_start():
+    guard = require_admin()
+    if guard:
+        return guard
     global monitor_thread
     if monitor_thread and monitor_thread.is_alive():
         return jsonify({"ok": False, "msg": "监控已在运行"})
@@ -755,21 +892,31 @@ def api_start():
 
 @app.route("/api/stop", methods=["POST"])
 def api_stop():
+    guard = require_admin()
+    if guard:
+        return guard
     stop_event.set()
     return jsonify({"ok": True, "msg": "已发送停止信号"})
 
 
 @app.route("/api/logs")
 def api_logs():
+    admin = is_admin()
     with STATE_LOCK:
-        return jsonify({
-            "logs": STATE["logs"][-MAX_CHECK_LOG:],
-            "timeout_logs": STATE["timeout_logs"][-MAX_TIMEOUT_LOG:],
-        })
+        logs = STATE["logs"][-MAX_CHECK_LOG:]
+        timeout_logs = STATE["timeout_logs"][-MAX_TIMEOUT_LOG:]
+    # 非管理员看到的日志也要脱敏（历史日志文件里可能还存着旧 IP）
+    if not admin:
+        logs = [mask_text(l) for l in logs]
+        timeout_logs = [mask_text(l) for l in timeout_logs]
+    return jsonify({"logs": logs, "timeout_logs": timeout_logs})
 
 
 @app.route("/api/logs/clear", methods=["POST"])
 def api_clear_logs():
+    guard = require_admin()
+    if guard:
+        return guard
     data = request.get_json(force=True) or {}
     which = data.get("which", "all")
     with STATE_LOCK:
@@ -808,6 +955,11 @@ def api_render_resource():
 
 
 restore_logs_from_file()
+
+if not ADMIN_TOKEN:
+    print("[boot] 警告：未设置 ADMIN_TOKEN，所有管理操作已禁用，页面只能是只读掩码模式")
+else:
+    print(f"[boot] 管理口令已启用；允许的跨域来源：{', '.join(ALLOWED_ORIGINS) or '（空）'}")
 
 _boot_cfg = load_config()
 if _boot_cfg.get("servers"):

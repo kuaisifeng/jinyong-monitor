@@ -768,6 +768,29 @@
       font-size: 14px;
     }
   }
+
+  /* ============ 管理权限控制 ============ */
+  body:not(.admin-mode) .admin-only { display: none !important; }
+  body:not(.admin-mode) .col-port { display: none !important; }
+  .admin-badge {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: rgba(77,158,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(77,158,255,0.35);
+    white-space: nowrap;
+  }
+  body.admin-mode .admin-badge { display: inline-flex; }
+  body.admin-mode .admin-badge::before {
+    content: "";
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--online);
+  }
+  .lock-btn.logged { color: var(--accent); border-color: rgba(77,158,255,0.45); }
 </style>
 </head>
 <body>
@@ -781,8 +804,10 @@
     ⚡ 后端统一管理状态 · 多设备实时同步 · 网页只做展示
   </div>
   <div class="topbar-right">
+    <span class="admin-badge" id="adminBadge">管理模式</span>
     <span class="maint-badge" id="maintBadge">🔧 维护时段·告警已静默</span>
     <button class="icon-btn" id="readmeBtn" title="使用说明">?</button>
+    <button class="icon-btn lock-btn" id="adminBtn" title="管理员登录">🔒</button>
     <div class="clock" id="clock">--:--:--</div>
     <div class="run-indicator stopped" id="runIndicator">
       <span class="run-dot"></span>
@@ -803,14 +828,14 @@
       <div class="field">
         <div class="field-header">
           <label>服务器列表 <span class="badge" id="serverListMode">视图模式</span></label>
-          <button class="btn-mini" id="serverEditToggle">编辑</button>
+          <button class="btn-mini admin-only" id="serverEditToggle">编辑</button>
         </div>
         <div id="serverViewList" class="check-list"></div>
         <textarea id="serverEditTextarea" style="display:none;min-height:110px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110 6732&#10;17区*49.235.42.168*6732"></textarea>
       </div>
 
-      <!-- Bark 推送订阅 -->
-      <div class="field">
+      <!-- Bark 推送订阅（仅管理员可见） -->
+      <div class="field admin-only">
         <div class="field-header">
           <label>Bark 推送订阅 <span class="badge">iOS</span></label>
           <div class="field-header-actions">
@@ -852,7 +877,7 @@
       <div class="field">
         <div class="field-header">
           <label>免告警维护时段 <span class="badge" id="maintModeBadge">视图模式</span></label>
-          <button class="btn-mini" id="maintEditToggle">编辑</button>
+          <button class="btn-mini admin-only" id="maintEditToggle">编辑</button>
         </div>
         <div id="maintViewList" class="check-list" style="max-height:150px;"></div>
         <div id="maintEditView" style="display:none;"></div>
@@ -879,14 +904,14 @@
         </select>
       </div>
 
-      <button class="btn primary" id="saveConfigBtn">💾 保存运行参数</button>
-      <button class="btn success" id="startBtn">▶ 启动监控</button>
-      <button class="btn danger" id="stopBtn" disabled>■ 停止监控</button>
+      <button class="btn primary admin-only" id="saveConfigBtn">💾 保存运行参数</button>
+      <button class="btn success admin-only" id="startBtn">▶ 启动监控</button>
+      <button class="btn danger admin-only" id="stopBtn" disabled>■ 停止监控</button>
 
-      <div class="divider"></div>
+      <div class="divider admin-only"></div>
 
-      <button class="btn" id="clearCheckLogBtn">🗑 清空检测日志</button>
-      <button class="btn" id="clearTimeoutLogBtn">🗑 清空超时日志</button>
+      <button class="btn admin-only" id="clearCheckLogBtn">🗑 清空检测日志</button>
+      <button class="btn admin-only" id="clearTimeoutLogBtn">🗑 清空超时日志</button>
 
     </div>
 
@@ -913,7 +938,7 @@
 
   <section class="content">
     <div class="toolbar">
-      <input type="text" id="filterInput" placeholder="🔍 筛选服务器名称或 IP...">
+      <input type="text" id="filterInput" placeholder="🔍 筛选区服名称...">
       <div class="stats" id="statsText">共 0 台 · <b>在线 0</b> · <i>离线 0</i></div>
     </div>
 
@@ -921,7 +946,7 @@
       <table>
         <thead>
           <tr>
-            <th>状态</th><th>名称</th><th>IP</th><th>端口</th>
+            <th>状态</th><th>名称</th><th>IP</th><th class="col-port">端口</th>
             <th>RTT 延迟</th><th>总耗时</th><th>连续超时</th>
             <th>备注</th><th>延迟趋势</th>
           </tr>
@@ -938,7 +963,7 @@
         <button class="tab" data-tab="timeout">⚠️ 超时告警日志</button>
         <div class="log-actions">
           <button id="copyLogBtn">复制</button>
-          <button id="clearLogBtn">清空</button>
+          <button id="clearLogBtn" class="admin-only">清空</button>
           <button id="autoScrollBtn" class="active">自动滚动</button>
         </div>
       </div>
@@ -978,12 +1003,23 @@
     <div class="readme-section">
       <h4>⚙️ 快速开始</h4>
       <ul>
+        <li>先点右上角 🔒 输入管理口令进入管理模式，配置项才会出现</li>
         <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
         <li>如需 Bark 报警，点「Bark 推送订阅」旁的「编辑」填入 device_key</li>
         <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的频道</li>
         <li>免告警维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
         <li>点「▶ 启动监控」开始探测</li>
+      </ul>
+    </div>
+
+    <div class="readme-section">
+      <h4>🔐 公开视图与管理模式</h4>
+      <ul>
+        <li>未登录时页面是<b>只读脱敏视图</b>：IP 显示为 <code>49.234.*.*</code>，端口与推送密钥都不下发</li>
+        <li>点右上角 🔒 输入管理口令后，才会显示明文 IP，并解锁编辑 / 启停 / 清空等操作</li>
+        <li>口令只保存在本机浏览器（localStorage），不会写进页面源码</li>
+        <li>口令由后端环境变量 <code>ADMIN_TOKEN</code> 决定；未配置时后端只提供掩码数据</li>
       </ul>
     </div>
 
@@ -1091,7 +1127,7 @@
       <h4>🔔 报警触发条件</h4>
       <ul>
         <li>服务器连续超时达到阈值（默认 5 次）才会推送</li>
-        <li>报警内容包含服务器名、IP、首次超时时间、连续超时次数</li>
+        <li>报警内容包含服务器名、首次超时时间、连续超时次数（Ntfy 公开频道不携带 IP）</li>
         <li>critical 级别 + alarm 铃声，绕过静音模式，确保能收到</li>
       </ul>
     </div>
@@ -1183,6 +1219,7 @@ const BACKEND_URL = "https://jinyong-monitor.onrender.com";
 
 const state = {
   backendUrl: BACKEND_URL,
+  isAdmin: false,
   running: false,
   results: [],
   config: null,
@@ -1237,6 +1274,95 @@ function isAnyEditing() {
   return serverEditMode || barkEditMode || maintEditMode;
 }
 
+// ---------- 管理口令 ----------
+const TOKEN_KEY = "jymon_admin_token";
+
+function getToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+}
+
+function setToken(t) {
+  try {
+    if (t) localStorage.setItem(TOKEN_KEY, t);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch (e) {}
+}
+
+// 所有请求统一走这里：有口令就自动带上，让后端返回明文并放行写操作
+function apiFetch(path, opts) {
+  const o = Object.assign({}, opts || {});
+  const h = Object.assign({}, o.headers || {});
+  const t = getToken();
+  if (t) h["X-Admin-Token"] = t;
+  o.headers = h;
+  return window.fetch(apiUrl(path), o);
+}
+
+function applyAdminUI() {
+  const admin = state.isAdmin === true;
+  document.body.classList.toggle("admin-mode", admin);
+  const btn = $("adminBtn");
+  if (btn) {
+    btn.textContent = admin ? "🔓" : "🔒";
+    btn.title = admin ? "退出管理模式" : "管理员登录";
+    btn.classList.toggle("logged", admin);
+  }
+  ["intervalInput", "alertStreakInput", "timezoneSelect"].forEach((id) => {
+    const el = $(id);
+    if (el) el.disabled = !admin;
+  });
+  if (!admin && isAnyEditing()) {
+    serverEditMode = false;
+    barkEditMode = false;
+    maintEditMode = false;
+    renderServerList();
+    renderBarkList();
+    renderMaintenanceList();
+  }
+}
+
+async function verifyAdmin() {
+  try {
+    const r = await apiFetch("/api/config");
+    const d = await r.json();
+    return d.is_admin === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function enterAdmin() {
+  const t = prompt("请输入管理口令");
+  if (!t || !t.trim()) return;
+  setToken(t.trim());
+  if (await verifyAdmin()) {
+    state.isAdmin = true;
+    applyAdminUI();
+    state.configLoaded = false;
+    await loadConfig(true);
+    await fetchStatus();
+  } else {
+    setToken("");
+    showModal("验证失败", "管理口令不正确，或后端未配置 ADMIN_TOKEN。");
+  }
+}
+
+async function exitAdmin() {
+  const ok = await showConfirm("退出管理", "确定退出管理模式吗？退出后将回到只读的脱敏视图。");
+  if (!ok) return;
+  setToken("");
+  state.isAdmin = false;
+  applyAdminUI();
+  state.configLoaded = false;
+  await loadConfig(true);
+  await fetchStatus();
+}
+
+$("adminBtn").addEventListener("click", () => {
+  if (state.isAdmin) exitAdmin();
+  else enterAdmin();
+});
+
 function showLoading(show) { loading.classList.toggle("show", show); }
 function pad(n) { return String(n).padStart(2, "0"); }
 
@@ -1271,7 +1397,7 @@ function setSidebarCollapsed(collapsed, syncToBackend) {
     $("collapseBtn").textContent = "◀";
   }
   if (syncToBackend && state.backendUrl) {
-    fetch(apiUrl("/api/sidebar/toggle"), {
+    apiFetch("/api/sidebar/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ collapsed }),
@@ -1410,14 +1536,19 @@ async function loadConfig(force = false) {
   if (!state.backendUrl) return;
   if (state.configLoaded && !force) return;
   try {
-    const r = await fetch(apiUrl("/api/config"));
+    const r = await apiFetch("/api/config");
     const cfg = await r.json();
     state.config = cfg;
+    state.isAdmin = cfg.is_admin === true;
+    applyAdminUI();
 
     if (!serverEditMode) {
-      const serverLines = (cfg.servers || [])
-        .map((s) => `${s.name} ${s.ip} ${s.port || DEFAULT_PORT}`).join("\n");
-      $("serverEditTextarea").value = serverLines;
+      // 只有管理员才把明文 IP 写进编辑框，避免掩码值被误存回后端
+      if (state.isAdmin) {
+        const serverLines = (cfg.servers || [])
+          .map((s) => `${s.name} ${s.ip} ${s.port || DEFAULT_PORT}`).join("\n");
+        $("serverEditTextarea").value = serverLines;
+      }
       renderServerList();
     }
 
@@ -1461,7 +1592,7 @@ $("saveConfigBtn").addEventListener("click", async () => {
   };
   showLoading(true);
   try {
-    const r = await fetch(apiUrl("/api/config"), {
+    const r = await apiFetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cfg),
@@ -1483,7 +1614,7 @@ $("startBtn").addEventListener("click", async () => {
   if (!state.backendUrl) return;
   showLoading(true);
   try {
-    const r = await fetch(apiUrl("/api/start"), { method: "POST" });
+    const r = await apiFetch("/api/start", { method: "POST" });
     const data = await r.json();
     if (!data.ok) showModal("启动失败", data.msg || "未知错误");
     else { state.running = true; updateRunningState(true); await loadConfig(true); }
@@ -1495,7 +1626,7 @@ $("stopBtn").addEventListener("click", async () => {
   if (!state.backendUrl) return;
   showLoading(true);
   try {
-    await fetch(apiUrl("/api/stop"), { method: "POST" });
+    await apiFetch("/api/stop", { method: "POST" });
     state.running = false;
     updateRunningState(false);
     await loadConfig(true);
@@ -1538,20 +1669,21 @@ function renderServerList() {
   }
   view.innerHTML = servers.map((s, i) => `
     <label class="check-item">
-      <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""}>
+      <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? "checked" : ""} ${state.isAdmin ? "" : "disabled"}>
       <span class="s-name">${escapeHtml(s.name)}</span>
-      <span class="s-ip">${escapeHtml(s.ip)}:${s.port || DEFAULT_PORT}</span>
+      <span class="s-ip">${escapeHtml(s.ip_display || s.ip || "—")}</span>
     </label>
   `).join("");
 
   view.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     cb.addEventListener("change", async () => {
+      if (!state.isAdmin) return;
       const idx = parseInt(cb.dataset.idx);
       const srv = state.config.servers[idx];
       const enabled = cb.checked;
       srv.enabled = enabled;
       try {
-        await fetch(apiUrl("/api/servers/toggle"), {
+        await apiFetch("/api/servers/toggle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: srv.name, enabled }),
@@ -1562,6 +1694,8 @@ function renderServerList() {
 }
 
 $("serverEditToggle").addEventListener("click", async () => {
+  // 非管理员没有明文 IP，任何提交都会把掩码写进配置，直接拦掉
+  if (!state.isAdmin) return;
   if (serverEditMode) {
     const newServers = parseServersText($("serverEditTextarea").value);
     const oldMap = {};
@@ -1575,7 +1709,7 @@ $("serverEditToggle").addEventListener("click", async () => {
 
     showLoading(true);
     try {
-      const r = await fetch(apiUrl("/api/config"), {
+      const r = await apiFetch("/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ servers: newServers }),
@@ -1641,7 +1775,7 @@ function renderBarkList() {
 async function saveBarkKeysToBackend() {
   if (!state.backendUrl) return;
   try {
-    const r = await fetch(apiUrl("/api/config"), {
+    const r = await apiFetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bark_keys: state.barkKeys }),
@@ -1799,7 +1933,7 @@ async function saveMaintenanceToBackend() {
     }
   }
   try {
-    const r = await fetch(apiUrl("/api/config"), {
+    const r = await apiFetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ maintenance_windows: state.maintenanceWindows }),
@@ -1840,7 +1974,7 @@ async function clearLogs(which) {
   if (!ok) return;
 
   try {
-    await fetch(apiUrl("/api/logs/clear"), {
+    await apiFetch("/api/logs/clear", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ which }),
@@ -1902,7 +2036,7 @@ function setBar(fillEl, pct) {
 async function fetchRenderResource() {
   if (!state.backendUrl) return;
   try {
-    const r = await fetch(apiUrl("/api/render_resource"));
+    const r = await apiFetch("/api/render_resource");
     const data = await r.json();
 
     if (data.error) {
@@ -1934,13 +2068,19 @@ async function fetchRenderResource() {
 async function fetchStatus() {
   if (!state.backendUrl) return;
   try {
-    const r = await fetch(apiUrl("/api/status"));
+    const r = await apiFetch("/api/status");
     const data = await r.json();
 
     const wasRunning = state.running;
     state.running = !!data.running;
     state.results = data.results || [];
     if (typeof data.timezone_offset === "number") state.timezoneOffset = data.timezone_offset;
+
+    // 后端判定当前请求是否为管理员：口令被改动或后端未配置时自动降级为只读
+    if (typeof data.is_admin === "boolean" && data.is_admin !== state.isAdmin) {
+      state.isAdmin = data.is_admin;
+      applyAdminUI();
+    }
 
     if (data.ntfy_topic && data.ntfy_topic !== state.ntfyTopic) {
       state.ntfyTopic = data.ntfy_topic;
@@ -1989,12 +2129,14 @@ async function fetchStatus() {
 
     if (!serverEditMode && Array.isArray(data.servers_config)) {
       if (!state.config) state.config = {};
-      const newServers = data.servers_config.map((s) => ({
-        name: s.name, ip: s.ip, port: s.port || DEFAULT_PORT, enabled: s.enabled !== false
-      }));
-      const localServers = (state.config.servers || []).map((s) => ({
-        name: s.name, ip: s.ip, port: s.port || DEFAULT_PORT, enabled: s.enabled !== false
-      }));
+      const normalize = (s) => ({
+        name: s.name,
+        ip_display: s.ip_display || "",
+        port_display: s.port_display || "",
+        enabled: s.enabled !== false,
+      });
+      const newServers = data.servers_config.map(normalize);
+      const localServers = (state.config.servers || []).map(normalize);
       if (JSON.stringify(newServers) !== JSON.stringify(localServers)) {
         state.config.servers = data.servers_config;
         renderServerList();
@@ -2014,7 +2156,7 @@ async function fetchStatus() {
       const prevOk = state.lastOkMap[res.name];
       if (prevOk === true && res.ok === false && res.streak === 1) {
         showModal("⚠️ 服务器超时",
-          `服务器：${res.name}\nIP：${res.ip}:${res.port}\n错误：${res.err}\n时间：${res.last_check}`);
+          `服务器：${res.name}\nIP：${res.ip_display || "—"}\n错误：${res.err}\n时间：${res.last_check}`);
       }
       state.lastOkMap[res.name] = res.ok;
     });
@@ -2026,7 +2168,7 @@ async function fetchStatus() {
 async function fetchLogs() {
   if (!state.backendUrl) return;
   try {
-    const r = await fetch(apiUrl("/api/logs"));
+    const r = await apiFetch("/api/logs");
     const data = await r.json();
     state.logs = data.logs || [];
     state.timeoutLogs = data.timeout_logs || [];
@@ -2039,8 +2181,8 @@ function renderTable() {
   let list = state.results;
   if (state.filter) {
     list = list.filter((r) =>
-      r.name.toLowerCase().includes(state.filter) ||
-      r.ip.toLowerCase().includes(state.filter)
+      String(r.name || "").toLowerCase().includes(state.filter) ||
+      String(r.ip_display || "").toLowerCase().includes(state.filter)
     );
   }
 
@@ -2076,7 +2218,7 @@ function renderTable() {
         <td><div class="status-cell"></div></td>
         <td class="name-cell"></td>
         <td class="mono ip-cell"></td>
-        <td class="mono port-cell"></td>
+        <td class="mono port-cell col-port"></td>
         <td class="mono rtt-cell"></td>
         <td class="mono total-cell"></td>
         <td><span class="streak-badge"></span></td>
@@ -2092,8 +2234,8 @@ function renderTable() {
     statusCell.innerHTML = `<span class="status-dot ${statusClass}"></span>${statusText}`;
 
     tr.querySelector(".name-cell").textContent = r.name;
-    tr.querySelector(".ip-cell").textContent = r.ip;
-    tr.querySelector(".port-cell").textContent = r.port || DEFAULT_PORT;
+    tr.querySelector(".ip-cell").textContent = r.ip_display || "—";
+    tr.querySelector(".port-cell").textContent = r.port_display || "—";
     tr.querySelector(".rtt-cell").textContent = r.ok ? r.rtt_ms.toFixed(1) + " ms" : "—";
     tr.querySelector(".total-cell").textContent = r.total_ms.toFixed(1) + " ms";
 
