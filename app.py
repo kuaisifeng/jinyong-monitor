@@ -124,6 +124,27 @@ def current_kick_epoch():
         return _kick_state["epoch"]
 
 
+def mask_key(key):
+    """Bark 密钥打码：保留首尾便于识别，中间抹掉，拿到也没法推送"""
+    s = str(key or "").strip()
+    if not s:
+        return ""
+    if len(s) <= 8:
+        return s[:1] + "****"
+    return s[:4] + "****" + s[-3:]
+
+
+def bark_key_view(bk, admin):
+    """Bark 订阅的对外视图：管理员给全量，其他人给掩码（列表照常展示）"""
+    if isinstance(bk, str):
+        bk = {"key": bk, "enabled": True}
+    key = str(bk.get("key") or "").strip()
+    enabled = bool(bk.get("enabled", True))
+    if admin:
+        return {"key": key, "enabled": enabled, "masked": False}
+    return {"key": mask_key(key), "enabled": enabled, "masked": True}
+
+
 def server_view(s, admin):
     """服务器条目的对外视图：非管理员只给掩码"""
     ip = s.get("ip", "")
@@ -790,8 +811,8 @@ def api_status():
         cfg = load_config()
     result["is_admin"] = admin
     result["sidebar_collapsed"] = bool(cfg.get("sidebar_collapsed", False))
-    # 推送密钥只在通过口令校验后下发，避免任何人拿到后给你手机推垃圾
-    result["bark_keys"] = cfg.get("bark_keys", []) if admin else []
+    # 推送密钥：管理员拿全量，其他访客只拿掩码（面板照常展示，但密钥不可用）
+    result["bark_keys"] = [bark_key_view(b, admin) for b in cfg.get("bark_keys", [])]
     result["servers_config"] = [server_view(s, admin) for s in cfg.get("servers", [])]
     result["ntfy_topic"] = NTFY_TOPIC
     result["ntfy_server"] = NTFY_SERVER
@@ -810,7 +831,7 @@ def api_get_config():
             s["ip_display"] = s.get("ip", "")
             s["port_display"] = s.get("port", DEFAULT_PORT)
         return jsonify(out)
-    # 公开视图：不含明文 IP、端口、Bark 密钥
+    # 公开视图：不含明文 IP、端口、Bark 密钥（密钥给掩码，面板仍可展示）
     return jsonify({
         "interval": cfg.get("interval", 20),
         "timeout": cfg.get("timeout", 1.5),
@@ -819,7 +840,7 @@ def api_get_config():
         "sidebar_collapsed": bool(cfg.get("sidebar_collapsed", False)),
         "maintenance_windows": cfg.get("maintenance_windows", []),
         "servers": [server_view(s, False) for s in cfg.get("servers", [])],
-        "bark_keys": [],
+        "bark_keys": [bark_key_view(b, False) for b in cfg.get("bark_keys", [])],
         "is_admin": False,
     })
 

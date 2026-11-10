@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>金庸群侠传至尊服务器监控面板</title>
 <style>
   :root {
@@ -31,6 +31,15 @@
     --scrollbar-thumb: #2a3350;
     --scrollbar-thumb-hover: #3a4570;
     --ctrl-height: 30px;
+    --topbar-h: 56px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { overscroll-behavior: none; }
+  button, .tab, .btn, .btn-mini, .icon-btn, .collapse-btn {
+    -webkit-tap-highlight-color: transparent;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -58,7 +67,9 @@
   }
 
   .topbar {
-    display: flex; align-items: center; height: 56px; padding: 0 14px;
+    display: flex; align-items: center;
+    height: calc(var(--topbar-h) + var(--safe-top));
+    padding: var(--safe-top) calc(14px + env(safe-area-inset-right, 0px)) 0 calc(14px + env(safe-area-inset-left, 0px));
     background: linear-gradient(180deg, #131826 0%, #0f1422 100%);
     border-bottom: 1px solid var(--border); gap: 12px;
     position: relative; z-index: 20;
@@ -114,7 +125,12 @@
   .run-indicator.stopped .run-text { color: var(--offline); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .main { display: flex; height: calc(100vh - 56px); overflow: hidden; }
+  .main {
+    display: flex;
+    height: calc(100vh - var(--topbar-h) - var(--safe-top));
+    height: calc(100dvh - var(--topbar-h) - var(--safe-top));
+    overflow: hidden;
+  }
 
   .sidebar {
     width: 320px; background: var(--bg-card);
@@ -124,6 +140,10 @@
     flex-shrink: 0; overflow: hidden;
   }
   .sidebar.collapsed { width: 44px; }
+
+  /* 移动端抽屉相关元素：桌面端一律隐藏 */
+  .drawer-toggle, .drawer-backdrop { display: none; }
+
   .sidebar-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -294,6 +314,21 @@
     border: solid #ffffff;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+  }
+
+  .check-item input[type="checkbox"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .check-item:hover input[type="checkbox"]:disabled {
+    border-color: var(--cb-border);
+    background: var(--cb-bg);
+  }
+  .check-item input[type="checkbox"]:disabled:checked,
+  .check-item:hover input[type="checkbox"]:disabled:checked {
+    background: var(--cb-checked);
+    border-color: var(--cb-checked);
+    box-shadow: none;
   }
 
   .check-item .s-name {
@@ -723,26 +758,111 @@
 
   /* ========= iOS / Android 移动端适配 ========= */
   @media (max-width: 900px) {
-    .topbar { padding: 0 8px; gap: 6px; height: 52px; }
+    :root { --topbar-h: 52px; }
+
+    .topbar { gap: 6px; }
     .topbar-notice { display: none; }
     .logo { font-size: 12px; }
     .logo span:last-child { display: none; }
-    .main { height: calc(100vh - 52px); }
 
-    .sidebar { width: 260px; max-width: 70vw; }
-    .sidebar.collapsed { width: 44px !important; max-width: 44px; }
-    .sidebar.collapsed .sidebar-header { padding: 14px 4px; justify-content: center; }
-    .sidebar.collapsed .sidebar-header span { display: none; }
-    .sidebar.collapsed .collapse-btn {
-      background: rgba(77,158,255,0.1);
-      color: var(--accent);
-      border-color: rgba(77,158,255,0.3);
+    /* 汉堡按钮：替代原来常驻占位的侧边栏折叠条 */
+    .drawer-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; min-width: 40px;
+      border: 1px solid var(--border); border-radius: 9px;
+      background: var(--bg-input); color: var(--text-dim);
+      font-size: 17px; cursor: pointer;
+      -webkit-appearance: none; font-family: inherit;
+    }
+    .drawer-toggle:active { background: rgba(77,158,255,0.15); color: var(--accent); }
+
+    /* 侧边栏改覆盖式抽屉：不再挤压内容区，默认关闭 */
+    .sidebar {
+      position: fixed;
+      top: calc(var(--topbar-h) + var(--safe-top));
+      left: 0; bottom: 0;
+      width: 84vw; max-width: 340px;
+      z-index: 60;
+      transform: translateX(0);
+      transition: transform 0.25s ease;
+      box-shadow: 10px 0 34px rgba(0,0,0,0.5);
+      padding-bottom: var(--safe-bottom);
+    }
+    .sidebar.collapsed {
+      width: 84vw !important;
+      max-width: 340px;
+      transform: translateX(-101%);
+      box-shadow: none;
+      pointer-events: none;
+    }
+    /* 抽屉内即便 collapsed 也要保留完整内容，否则滑入滑出是个空壳 */
+    .sidebar.collapsed .sidebar-header { justify-content: space-between; padding: 14px 16px; }
+    .sidebar.collapsed .sidebar-header span { display: inline; }
+    .sidebar.collapsed .sidebar-content,
+    .sidebar.collapsed .sidebar-footer { display: block; }
+
+    .drawer-backdrop {
+      display: block;
+      position: fixed;
+      top: calc(var(--topbar-h) + var(--safe-top));
+      left: 0; right: 0; bottom: 0;
+      background: rgba(4,7,14,0.55);
+      z-index: 55;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .drawer-backdrop.show { opacity: 1; pointer-events: auto; }
+
+    .content {
+      padding: 8px;
+      padding-bottom: calc(8px + var(--safe-bottom));
+      gap: 8px;
+    }
+    .clock { display: none; }
+    .table-wrapper {
+      max-height: 42%;
+      border-radius: 10px;
+      overscroll-behavior-x: contain;
     }
 
-    .content { padding: 8px; }
-    .clock { display: none; }
-    .table-wrapper { max-height: 40%; }
-    .toolbar input { max-width: none; }
+    /* 手机上只留 状态 / 名称 / IP / 延迟 / 备注 */
+    th.col-total, td.total-cell,
+    th.col-streak, td.streak-cell,
+    th.col-spark, td.spark-cell { display: none; }
+
+    /* 固定列宽，保证窄屏一屏放得下，不用横向拖 */
+    table { font-size: 12px; table-layout: fixed; }
+    th { padding: 6px 6px; font-size: 10px; }
+    td { padding: 7px 6px; }
+    td.mono { font-size: 11px; }
+    .sparkline { display: none; }
+
+    .col-status { width: 52px; }
+    .col-name { width: 23%; }
+    .col-ip { width: 84px; }
+    .col-rtt { width: 64px; }
+    .col-port { width: 52px; }
+    .col-name, .col-ip, .col-rtt { overflow: hidden; text-overflow: ellipsis; }
+    td.err-text { white-space: normal; word-break: break-all; }
+    .status-cell { font-size: 12px; }
+
+    .toolbar { gap: 8px; }
+    .toolbar input { max-width: none; min-width: 0; }
+    .stats { font-size: 11px; flex-shrink: 0; }
+
+    /* iOS 上输入框字号 < 16px 时聚焦会自动放大整页 */
+    input, textarea, select { font-size: 16px !important; }
+
+    /* 触控目标放大，向 44px 靠拢 */
+    .btn-mini { min-height: 34px; padding: 7px 11px; }
+    .btn-help, .icon-copy {
+      width: 36px; height: 36px;
+      min-width: 36px; min-height: 36px;
+      font-size: 15px;
+    }
+    .icon-btn { width: 40px; height: 40px; min-width: 40px; }
+    .tab { padding: 9px 12px; }
+    .collapse-btn { min-width: 40px; min-height: 40px; }
 
     .check-item input[type="checkbox"],
     .maint-days input[type="checkbox"] {
@@ -754,19 +874,18 @@
       left: 5px; top: 1px;
       width: 5px; height: 10px;
     }
+    .check-list { max-height: 26vh; }
 
-    .maint-times input[type="time"] {
-      padding: 8px 8px;
-      font-size: 14px;
-    }
+    .maint-times input[type="time"] { padding: 8px; }
+    .modal { max-height: 80vh; }
+    .modal button { padding: 11px 20px; min-height: 42px; }
+  }
 
-    .modal button { padding: 10px 20px; }
-
-    .btn-help, .icon-copy {
-      width: 32px; height: 32px;
-      min-width: 32px; min-height: 32px;
-      font-size: 14px;
-    }
+  /* 窄屏再收一层，避免顶栏被挤爆 */
+  @media (max-width: 480px) {
+    .run-indicator { padding: 4px 8px; font-size: 11px; }
+    .admin-badge { font-size: 10px; padding: 2px 7px; }
+    .logo-icon { font-size: 15px; }
   }
 
   /* ============ 管理权限控制 ============ */
@@ -791,6 +910,24 @@
     background: var(--online);
   }
   .lock-btn.logged { color: var(--accent); border-color: rgba(77,158,255,0.45); }
+
+  /* 普通模式下可展示但不可操作的区域（例如 Bark 订阅列表） */
+  .readonly-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    color: var(--text-mute);
+    border: 1px solid var(--border);
+    background: rgba(136,146,168,0.08);
+    white-space: nowrap;
+  }
+  body.admin-mode .readonly-tag { display: none; }
+  .check-item.readonly { cursor: default; }
+  .check-item.readonly:hover { background: transparent; }
+  .check-item input[type="checkbox"]:disabled { cursor: not-allowed; }
+  .check-item.readonly .s-key { color: var(--text-dim); }
 
   /* ============ 管理员登录弹框（与页面同一套深色风格） ============ */
   .modal .modal-input {
@@ -841,6 +978,7 @@
 <body>
 
 <div class="topbar">
+  <button class="drawer-toggle" id="drawerToggle" aria-label="打开配置面板" title="配置">☰</button>
   <div class="logo">
     <div class="logo-icon">⚔</div>
     <span>金庸群侠传至尊监控</span>
@@ -862,6 +1000,8 @@
 </div>
 
 <div class="main">
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>配置</span>
@@ -879,17 +1019,18 @@
         <textarea id="serverEditTextarea" style="display:none;min-height:110px;" placeholder="每行一个，支持：&#10;18区 49.234.85.110 6732&#10;17区*49.235.42.168*6732"></textarea>
       </div>
 
-      <!-- Bark 推送订阅（仅管理员可见） -->
-      <div class="field admin-only">
+      <!-- Bark 推送订阅（所有人可见，仅管理员可勾选/编辑） -->
+      <div class="field">
         <div class="field-header">
           <label>Bark 推送订阅 <span class="badge">iOS</span></label>
           <div class="field-header-actions">
+            <span class="readonly-tag" id="barkReadonlyTag">只读</span>
             <button class="btn-mini btn-help" id="barkHelpBtn" title="Bark 使用说明">?</button>
-            <button class="btn-mini" id="barkEditToggle">编辑</button>
+            <button class="btn-mini admin-only" id="barkEditToggle">编辑</button>
           </div>
         </div>
         <div id="barkViewList" class="check-list" style="max-height:140px;"></div>
-        <textarea id="barkEditTextarea" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
+        <textarea id="barkEditTextarea" class="admin-only" style="display:none;min-height:80px;" placeholder="每行一个 Bark device_key&#10;示例：naM8KupgvF3LKidoBFn2Kh"></textarea>
       </div>
 
       <!-- Ntfy 推送订阅 -->
@@ -992,9 +1133,9 @@
       <table>
         <thead>
           <tr>
-            <th>状态</th><th>名称</th><th>IP</th><th class="col-port">端口</th>
-            <th>RTT 延迟</th><th>总耗时</th><th>连续超时</th>
-            <th>备注</th><th>延迟趋势</th>
+            <th class="col-status">状态</th><th class="col-name">名称</th><th class="col-ip">IP</th><th class="col-port">端口</th>
+            <th class="col-rtt">RTT 延迟</th><th class="col-total">总耗时</th><th class="col-streak">连续超时</th>
+            <th class="col-err">备注</th><th class="col-spark">延迟趋势</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -1077,7 +1218,7 @@
       <ul>
         <li>先点右上角 🔒 输入管理口令进入管理模式，配置项才会出现</li>
         <li>点「服务器列表」旁的「编辑」，每行格式：<code>名称 IP 端口</code> 或 <code>名称*IP*端口</code></li>
-        <li>如需 Bark 报警，点「Bark 推送订阅」旁的「编辑」填入 device_key</li>
+        <li>如需 Bark 报警，登录管理口令后点「Bark 推送订阅」旁的「编辑」填入 device_key（未登录时该列表只读展示）</li>
         <li>如需 Ntfy 报警，在手机安装 Ntfy 后订阅页面显示的频道</li>
         <li>免告警维护时段用可视化选择器，勾选星期 + 设置起止时间</li>
         <li>调整检测间隔 / 告警阈值 / 时区</li>
@@ -1088,9 +1229,9 @@
     <div class="readme-section">
       <h4>🔐 公开视图与管理模式</h4>
       <ul>
-        <li>未登录时页面是<b>只读脱敏视图</b>：IP 显示为 <code>49.234.*.*</code>，端口与推送密钥都不下发</li>
+        <li>未登录时页面是<b>只读脱敏视图</b>：IP 显示为 <code>49.234.*.*</code>，端口不下发，Bark 密钥只显示首尾片段</li>
         <li>点右上角 🔒 输入管理口令 <code>123321</code> 后，才会显示明文 IP，并解锁编辑 / 启停 / 清空等操作</li>
-        <li>口令只保存在本机浏览器（localStorage），不会写进页面源码</li>
+        <li>口令只保存在当前标签页（sessionStorage）：<b>刷新不掉线，关掉页面即自动退出</b></li>
         <li>口令默认为 <code>123321</code>，可用后端环境变量 <code>ADMIN_TOKEN</code> 改成别的</li>
       </ul>
     </div>
@@ -1109,8 +1250,9 @@
       <h4>🔄 多设备同步</h4>
       <ul>
         <li>后端地址已写死在页面，无需手动填写</li>
-        <li>所有状态（服务器、勾选、侧边栏折叠、Bark 密钥、维护时段）都保存在后端</li>
+        <li>服务器列表、勾选状态、Bark 密钥、维护时段都保存在后端</li>
         <li>任意设备操作后，其他设备 5 秒内自动同步</li>
+        <li>侧边栏折叠属于本机个人偏好，只存在当前浏览器，不参与同步</li>
       </ul>
     </div>
 
@@ -1359,17 +1501,26 @@ function isAnyEditing() {
 }
 
 // ---------- 管理口令 ----------
+// 存在 sessionStorage：刷新不掉线，关掉标签页/浏览器即自动退出管理模式
 const TOKEN_KEY = "jymon_admin_token";
+let _memToken = "";  // 隐私模式下 sessionStorage 可能不可用，用它兜底
 
 function getToken() {
-  try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+  try {
+    const v = sessionStorage.getItem(TOKEN_KEY) || "";
+    if (v) _memToken = v;
+    return v || _memToken;
+  } catch (e) { return _memToken; }
 }
 
 function setToken(t) {
+  _memToken = t || "";
   try {
-    if (t) localStorage.setItem(TOKEN_KEY, t);
-    else localStorage.removeItem(TOKEN_KEY);
+    if (t) sessionStorage.setItem(TOKEN_KEY, t);
+    else sessionStorage.removeItem(TOKEN_KEY);
   } catch (e) {}
+  // 清理历史版本残留在 localStorage 里的口令，避免旧数据长期留存
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
 }
 
 // 所有请求统一走这里：有口令就自动带上，让后端返回明文并放行写操作
@@ -1569,7 +1720,16 @@ setInterval(() => {
 }, 1000);
 
 // ---------- 侧边栏折叠 ----------
-function setSidebarCollapsed(collapsed, syncToBackend) {
+// 折叠是「本设备的个人偏好」，只存 localStorage，不再写后端。
+// 原因：以前存 config.json 属于全局共享状态，任何访客点一下全站跟着变，
+// 而且轮询回来的旧值会把刚展开的侧边栏又收回去（表现为「展开又收回」）。
+const SIDEBAR_KEY = "jymon_sidebar_collapsed";
+
+function isMobileLayout() {
+  try { return window.matchMedia("(max-width: 900px)").matches; } catch (e) { return false; }
+}
+
+function setSidebarCollapsed(collapsed, persist) {
   state.sidebarCollapsed = collapsed;
   if (collapsed) {
     sidebarEl.classList.add("collapsed");
@@ -1578,24 +1738,47 @@ function setSidebarCollapsed(collapsed, syncToBackend) {
     sidebarEl.classList.remove("collapsed");
     $("collapseBtn").textContent = "◀";
   }
-  if (syncToBackend && state.backendUrl) {
-    apiFetch("/api/sidebar/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ collapsed }),
-    }).catch(() => {});
+  // 移动端是抽屉：展开时显示遮罩、锁定背景滚动
+  const backdrop = $("drawerBackdrop");
+  if (backdrop) backdrop.classList.toggle("show", !collapsed && isMobileLayout());
+  if (persist) {
+    try { localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0"); } catch (e) {}
   }
 }
 
+function toggleSidebar() {
+  setSidebarCollapsed(!sidebarEl.classList.contains("collapsed"), true);
+}
+
+// 只绑定一次 click。以前同时绑了 touchend，部分安卓 WebView / 微信内置浏览器
+// 拦不住 touchend 之后的合成 click，两个处理器各算一次 next，先展开又被收回。
 $("collapseBtn").addEventListener("click", (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const next = !sidebarEl.classList.contains("collapsed");
-  setSidebarCollapsed(next, true);
+  e.preventDefault();
+  e.stopPropagation();
+  toggleSidebar();
 });
-$("collapseBtn").addEventListener("touchend", (e) => {
-  e.preventDefault(); e.stopPropagation();
-  const next = !sidebarEl.classList.contains("collapsed");
-  setSidebarCollapsed(next, true);
+
+// 移动端：抽屉打开后点遮罩关闭
+const _backdropEl = $("drawerBackdrop");
+if (_backdropEl) {
+  _backdropEl.addEventListener("click", () => setSidebarCollapsed(true, true));
+}
+const _drawerBtn = $("drawerToggle");
+if (_drawerBtn) {
+  _drawerBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleSidebar();
+  });
+}
+
+// 从桌面宽度切到移动端时收起抽屉，避免侧边栏盖住内容
+let _wasMobile = isMobileLayout();
+window.addEventListener("resize", () => {
+  const m = isMobileLayout();
+  if (m !== _wasMobile) {
+    _wasMobile = m;
+    if (m) setSidebarCollapsed(true, false);
+  }
 });
 
 // ---------- 通用弹窗 ----------
@@ -1748,7 +1931,7 @@ async function loadConfig(force = false) {
 
     if (!barkEditMode) {
       state.barkKeys = (cfg.bark_keys || []).map((b) => ({
-        key: b.key, enabled: b.enabled !== false
+        key: b.key, enabled: b.enabled !== false, masked: b.masked === true
       }));
       renderBarkList();
     }
@@ -1917,6 +2100,10 @@ function renderBarkList() {
   const list = $("barkViewList");
   const ta = $("barkEditTextarea");
   const toggle = $("barkEditToggle");
+  const admin = state.isAdmin === true;
+
+  // 非管理员永远不进编辑态
+  if (barkEditMode && !admin) barkEditMode = false;
 
   if (barkEditMode) {
     list.style.display = "none";
@@ -1931,18 +2118,24 @@ function renderBarkList() {
     toggle.classList.remove("active");
 
     if (!state.barkKeys.length) {
-      list.innerHTML = '<div class="check-empty">暂无密钥，点击“编辑”添加</div>';
+      list.innerHTML = `<div class="check-empty">${admin ? "暂无密钥，点击“编辑”添加" : "暂无订阅"}</div>`;
       return;
     }
+    // 普通模式拿到的是后端脱敏后的 key（形如 naM8****2Kh），复选框禁用但仍能看出订阅状态
     list.innerHTML = state.barkKeys.map((b, i) => {
-      const shortKey = b.key.length > 20 ? b.key.slice(0, 10) + "..." + b.key.slice(-6) : b.key;
+      const isMasked = b.masked === true || !admin;
+      const shown = isMasked
+        ? escapeHtml(b.key)
+        : escapeHtml(b.key.length > 20 ? b.key.slice(0, 10) + "..." + b.key.slice(-6) : b.key);
       return `
-        <label class="check-item">
-          <input type="checkbox" data-idx="${i}" ${b.enabled ? "checked" : ""}>
-          <span class="s-key" title="${escapeHtml(b.key)}">${escapeHtml(shortKey)}</span>
+        <label class="check-item${admin ? "" : " readonly"}">
+          <input type="checkbox" data-idx="${i}" ${b.enabled ? "checked" : ""} ${admin ? "" : "disabled"}>
+          <span class="s-key" title="${isMasked ? "密钥已脱敏" : escapeHtml(b.key)}">${shown}</span>
         </label>
       `;
     }).join("");
+
+    if (!admin) return;  // 只读：不绑事件
 
     list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
       cb.addEventListener("change", async () => {
@@ -2304,15 +2497,10 @@ async function fetchStatus() {
       runText.textContent = "未运行";
     }
 
-    if (typeof data.sidebar_collapsed === "boolean") {
-      const current = sidebarEl.classList.contains("collapsed");
-      if (current !== data.sidebar_collapsed) {
-        setSidebarCollapsed(data.sidebar_collapsed, false);
-      }
-    }
+    // 侧边栏折叠不再跟随服务端：本设备偏好由用户自己控制，避免轮询把刚展开的状态打回去
 
     if (!barkEditMode && Array.isArray(data.bark_keys)) {
-      const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false }));
+      const newKeys = data.bark_keys.map((b) => ({ key: b.key, enabled: b.enabled !== false, masked: b.masked === true }));
       if (JSON.stringify(newKeys) !== JSON.stringify(state.barkKeys)) {
         state.barkKeys = newKeys;
         renderBarkList();
@@ -2407,15 +2595,15 @@ function renderTable() {
       tr = document.createElement("tr");
       tr.dataset.name = r.name;
       tr.innerHTML = `
-        <td><div class="status-cell"></div></td>
-        <td class="name-cell"></td>
-        <td class="mono ip-cell"></td>
+        <td class="col-status"><div class="status-cell"></div></td>
+        <td class="name-cell col-name"></td>
+        <td class="mono ip-cell col-ip"></td>
         <td class="mono port-cell col-port"></td>
-        <td class="mono rtt-cell"></td>
+        <td class="mono rtt-cell col-rtt"></td>
         <td class="mono total-cell"></td>
-        <td><span class="streak-badge"></span></td>
-        <td class="err-text"></td>
-        <td><canvas class="sparkline" width="80" height="24"></canvas></td>
+        <td class="streak-cell"><span class="streak-badge"></span></td>
+        <td class="err-text col-err"></td>
+        <td class="spark-cell"><canvas class="sparkline" width="80" height="24"></canvas></td>
       `;
     }
 
@@ -2590,11 +2778,20 @@ function renderLogsFull(lines) {
 
 // ---------- 初始化 ----------
 function init() {
+  initSidebar();
   loadConfig(true);
   fetchStatus();
   fetchLogs();
   fetchRenderResource();
   startPolling();
+}
+
+// 折叠状态取自本机：手机默认收起（抽屉），桌面默认展开
+function initSidebar() {
+  let stored = null;
+  try { stored = localStorage.getItem(SIDEBAR_KEY); } catch (e) {}
+  const collapsed = stored === null ? isMobileLayout() : stored === "1";
+  setSidebarCollapsed(collapsed, false);
 }
 
 init();
